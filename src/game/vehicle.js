@@ -4,7 +4,7 @@
  */
 
 import * as THREE from 'three';
-import { createBlock, createPreviewBlock, BLOCK_COSTS, BLOCK_MAX_HEALTH } from './blocks.js';
+import { createBlock, createPreviewBlock, BLOCK_COSTS, BLOCK_MAX_HEALTH, BLOCK_WEIGHTS, WHEEL_CAPACITY } from './blocks.js';
 import { disposeBlock, disposeVehicle } from '../utils/disposable.js';
 
 /**
@@ -359,13 +359,13 @@ export class VehicleBuilder {
         let totalWeight = 0;
         blocks.forEach(block => {
             const type = block.userData.type;
-            totalWeight += require('./blocks.js').BLOCK_WEIGHTS[type] || 1;
+            totalWeight += BLOCK_WEIGHTS[type] || 1;
         });
 
         // Calculate wheel capacity
         let wheelCapacity = 0;
-        wheelCapacity += counts.wheel * require('./blocks.js').WHEEL_CAPACITY.wheel;
-        wheelCapacity += counts.largewheel * require('./blocks.js').WHEEL_CAPACITY.largewheel;
+        wheelCapacity += counts.wheel * WHEEL_CAPACITY.wheel;
+        wheelCapacity += counts.largewheel * WHEEL_CAPACITY.largewheel;
 
         // Calculate movement stats
         const enginePower = counts.engine * 1.5;
