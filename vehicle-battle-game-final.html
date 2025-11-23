@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Battlers - 3D Vehicle Combat</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Rajdhani:wght@300;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, #1a2540 0%, #2a3f5f 50%, #1f2a3d 100%);
+            color: #00ffcc;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(ellipse at center, #2a3f5f 0%, #1a2540 100%);
+        }
+        
+        #ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        #topBar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(180deg, rgba(10, 14, 39, 0.95) 0%, transparent 100%);
+            border-bottom: 2px solid rgba(0, 255, 204, 0.2);
+        }
+        
+        #title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            color: #00ffcc;
+            text-shadow: 0 0 20px rgba(0, 255, 204, 0.8), 0 0 40px rgba(0, 255, 204, 0.4);
+            letter-spacing: 4px;
+        }
+        
+        #stats {
+            display: flex;
+            gap: 30px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .stat {
+            background: rgba(0, 255, 204, 0.1);
+            padding: 8px 16px;
+            border: 2px solid rgba(0, 255, 204, 0.3);
+            border-radius: 4px;
+            box-shadow: inset 0 0 20px rgba(0, 255, 204, 0.1);
+        }
+        
+        #buildPanel {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(10, 14, 39, 0.95);
+            border: 2px solid rgba(0, 255, 204, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            min-width: 200px;
+            box-shadow: 0 0 40px rgba(0, 255, 204, 0.2);
+            pointer-events: auto;
+        }
+        
+        #buildPanel h3 {
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            color: #00ffcc;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .block-type {
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(0, 255, 204, 0.05);
+            border: 2px solid rgba(0, 255, 204, 0.2);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        
+        .block-type:hover {
+            background: rgba(0, 255, 204, 0.2);
+            border-color: #00ffcc;
+            transform: translateX(5px);
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+        }
+        
+        .block-type.active {
+            background: rgba(0, 255, 204, 0.3);
+            border-color: #00ffcc;
+            box-shadow: 0 0 25px rgba(0, 255, 204, 0.5);
+        }
+        
+        .block-type small {
+            display: block;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 3px;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            pointer-events: none;
+        }
+        
+        .control-group {
+            background: rgba(10, 14, 39, 0.95);
+            border: 2px solid rgba(0, 255, 204, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            pointer-events: auto;
+            box-shadow: 0 0 40px rgba(0, 255, 204, 0.2);
+        }
+        
+        button {
+            background: linear-gradient(135deg, rgba(0, 255, 204, 0.2), rgba(0, 255, 204, 0.1));
+            color: #00ffcc;
+            border: 2px solid rgba(0, 255, 204, 0.5);
+            padding: 12px 24px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 4px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        button:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 204, 0.4), rgba(0, 255, 204, 0.2));
+            border-color: #00ffcc;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        #modeToggle {
+            font-size: 1rem;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, rgba(255, 0, 136, 0.3), rgba(255, 0, 136, 0.1));
+            border-color: rgba(255, 0, 136, 0.5);
+            color: #ff0088;
+        }
+        
+        #modeToggle:hover {
+            background: linear-gradient(135deg, rgba(255, 0, 136, 0.5), rgba(255, 0, 136, 0.3));
+            border-color: #ff0088;
+            box-shadow: 0 0 30px rgba(255, 0, 136, 0.6);
+        }
+        
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(10, 14, 39, 0.95);
+            border: 2px solid rgba(0, 255, 204, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 0.9rem;
+            max-width: 300px;
+            line-height: 1.6;
+        }
+        
+        #instructions div {
+            margin: 5px 0;
+            opacity: 0.8;
+        }
+        
+        .battle-mode #buildPanel,
+        .battle-mode #instructions {
+            display: none;
+        }
+        
+        #healthBar {
+            position: absolute;
+            top: 100px;
+            left: 20px;
+            width: 300px;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(0, 255, 204, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        #healthFill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ffcc, #00ff88);
+            transition: width 0.3s;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+        }
+        
+        .damage-flash {
+            animation: flash 0.3s;
+        }
+        
+        @keyframes flash {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(2) hue-rotate(45deg); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="ui">
+        <div id="topBar">
+            <div id="title">BLOCK BATTLERS</div>
+            <div style="display: flex; flex-direction: column; gap: 15px; align-items: flex-end;">
+                <div id="stats">
+                    <div class="stat">🔩 IRON: <span id="ironCount">50</span></div>
+                    <div class="stat">🔶 COPPER: <span id="copperCount">50</span></div>
+                    <div class="stat">WAVE: <span id="waveNumber">1</span></div>
+                    <div class="stat">BLOCKS: <span id="blockCount">0</span></div>
+                    <div class="stat">ENEMIES: <span id="enemyCount">2</span></div>
+                </div>
+                <button id="modeToggle" onclick="game.toggleMode()" style="margin: 0; pointer-events: auto;">START BATTLE</button>
+            </div>
+        </div>
+        
+        <div id="buildPanel">
+            <h3>Build Blocks</h3>
+            <div class="block-type active" data-type="armor">🛡️ ARMOR [1]<br><small>3🔩 0🔶</small></div>
+            <div class="block-type" data-type="weapon">⚔️ WEAPON [2]<br><small>2🔩 3🔶</small></div>
+            <div class="block-type" data-type="spike">🔺 SPIKE [3]<br><small>1🔩 0🔶</small></div>
+            <div class="block-type" data-type="engine">⚡ ENGINE [4]<br><small>4🔩 4🔶</small></div>
+            <div class="block-type" data-type="core">💎 CORE [5]<br><small>5🔩 5🔶</small></div>
+            <div class="block-type" data-type="wheel">🎡 WHEEL [6]<br><small>2🔩 1🔶</small></div>
+            <div class="block-type" data-type="largewheel">⭕ LARGE [7]<br><small>3🔩 2🔶</small></div>
+        </div>
+        
+        <div id="healthBar">
+            <div id="healthFill" style="width: 100%"></div>
+        </div>
+        
+        <div id="controls">
+            <div class="control-group">
+                <button onclick="game.clearVehicle()">Clear All</button>
+                <button onclick="game.removeLastBlock()">Remove Last</button>
+            </div>
+        </div>
+        
+        <div id="instructions">
+            <div><strong>BUILD MODE:</strong></div>
+            <div>• Press 1-7 to select blocks</div>
+            <div>• Move mouse to see ghost preview</div>
+            <div>• Left click to place block</div>
+            <div>• Right click + drag to rotate view</div>
+            <div>• Press R to rotate blocks</div>
+            <div>• Scroll to zoom</div>
+            <div><strong>BATTLE MODE:</strong></div>
+            <div>• W/S to move forward/back</div>
+            <div>• A/D to rotate (more wheels = faster)</div>
+            <div>• Space to shoot</div>
+            <div>• Destroy enemy vehicles!</div>
+        </div>
+    </div>
+
+    <script>
+        const game = {
+            scene: null,
+            camera: null,
+            renderer: null,
+            vehicle: { blocks: [], group: null, blockCounts: { armor: 0, weapon: 0, engine: 0, core: 0, wheel: 0, spike: 0, largewheel: 0 } },
+            enemies: [],
+            mode: 'build',
+            selectedBlockType: 'armor',
+            blockRotation: 0, // Track current rotation angle
+            health: 100,
+            score: 0,
+            waveNumber: 1, // Track current wave
+            battlesWon: 0, // Track consecutive wins without core destruction
+            
+            // Player materials
+            materials: {
+                iron: 50,   // Back to 50
+                copper: 50  // Back to 50
+            },
+            
+            // Material costs for each block type
+            blockCosts: {
+                armor: { iron: 3, copper: 0 },
+                weapon: { iron: 2, copper: 3 },
+                engine: { iron: 4, copper: 4 },
+                core: { iron: 5, copper: 5 },
+                wheel: { iron: 2, copper: 1 },
+                spike: { iron: 1, copper: 0 },
+                largewheel: { iron: 3, copper: 2 }
+            },
+            
+            // Max health for each block type
+            blockMaxHealth: {
+                armor: 50,
+                weapon: 20,
+                engine: 30,
+                core: 100,
+                wheel: 25,
+                spike: 15,
+                largewheel: 40
+            },
+            
+            blockColors: {
+                armor: 0x4a9eff,      // Bright blue
+                weapon: 0xff1744,     // Bright red
+                engine: 0xffd700,     // Gold
+                core: 0x9c27b0,       // Purple
+                wheel: 0x2c2c2c,      // Dark gray
+                spike: 0xff6b00,      // Orange
+                largewheel: 0x1a1a1a  // Darker gray
+            },
+            
+            blockWeights: {
+                armor: 1.05,      // Was 3, now 35% of original
+                weapon: 0.7,      // Was 2
+                engine: 1.4,      // Was 4
+                core: 1.75,       // Was 5
+                wheel: 0.7,       // Was 2
+                spike: 0.35,      // Was 1
+                largewheel: 1.05  // Was 3
+            },
+            
+            // Weight capacity each wheel type can support
+            wheelCapacity: {
+                wheel: 3.5,       // Was 10, now 35% of original
+                largewheel: 7     // Was 20
+            },
+            
+            createBlockGeometry(type) {
+                let geometry;
+                switch(type) {
+                    case 'armor':
+                        // Thick cube for armor
+                        geometry = new THREE.BoxGeometry(1, 0.8, 1);
+                        break;
+                    case 'weapon':
+                        // Elongated box for weapon
+                        geometry = new THREE.BoxGeometry(0.6, 0.6, 1.2);
+                        break;
+                    case 'engine':
+                        // Octagonal prism for engine
+                        geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 8);
+                        geometry.rotateX(Math.PI / 2);
+                        break;
+                    case 'core':
+                        // Sphere for core
+                        geometry = new THREE.SphereGeometry(0.5, 16, 16);
+                        break;
+                    case 'wheel':
+                        // Torus/wheel shape
+                        geometry = new THREE.CylinderGeometry(0.4, 0.4, 0.6, 16);
+                        geometry.rotateZ(Math.PI / 2);
+                        break;
+                    case 'spike':
+                        // Cone for spike
+                        geometry = new THREE.ConeGeometry(0.3, 1, 8);
+                        geometry.rotateX(-Math.PI / 2); // Point forward
+                        break;
+                    case 'largewheel':
+                        // Larger wheel - takes up 2x space
+                        geometry = new THREE.CylinderGeometry(0.8, 0.8, 1.6, 20);
+                        geometry.rotateZ(Math.PI / 2);
+                        break;
+                    default:
+                        geometry = new THREE.BoxGeometry(1, 1, 1);
+                }
+                return geometry;
+            },
+            
+            init() {
+                console.log('=== GAME INIT STARTING ===');
+                const canvas = document.getElementById('gameCanvas');
+                console.log('Canvas:', canvas);
+                
+                this.scene = new THREE.Scene();
+                this.scene.fog = new THREE.Fog(0x0a0e27, 10, 100);
+                console.log('Scene created');
+                
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.camera.position.set(0, 5, 10);
+                this.camera.lookAt(0, 0, 0);
+                console.log('Camera created at:', this.camera.position);
+                
+                this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.shadowMap.enabled = true;
+                console.log('Renderer created');
+                
+                this.addLights();
+                console.log('Lights added');
+                this.addGround();
+                console.log('Ground added');
+                this.setupVehicle();
+                console.log('Vehicle setup complete');
+                this.createEnemies();
+                console.log('Enemies created');
+                this.setupControls();
+                this.updateMaterialDisplay();
+                this.animate();
+                
+                window.addEventListener('resize', () => this.onResize());
+            },
+            
+            addLights() {
+                const ambientLight = new THREE.AmbientLight(0x808080, 1);
+                this.scene.add(ambientLight);
+                
+                const mainLight = new THREE.DirectionalLight(0xffffff, 1.5);
+                mainLight.position.set(5, 10, 5);
+                mainLight.castShadow = true;
+                this.scene.add(mainLight);
+                
+                // Add strong light pointing down at base plate
+                const baseLight = new THREE.PointLight(0x00ffff, 2, 30);
+                baseLight.position.set(0, 10, 0);
+                this.scene.add(baseLight);
+                
+                const fillLight = new THREE.PointLight(0xff0088, 0.5);
+                fillLight.position.set(-5, 5, -5);
+                this.scene.add(fillLight);
+            },
+            
+            addGround() {
+                const geometry = new THREE.PlaneGeometry(200, 200, 20, 20);
+                const material = new THREE.MeshStandardMaterial({ 
+                    color: 0x1a1f3a,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const ground = new THREE.Mesh(geometry, material);
+                ground.rotation.x = -Math.PI / 2;
+                ground.position.y = -0.5;
+                this.scene.add(ground);
+                
+                const gridHelper = new THREE.GridHelper(200, 40, 0x00ffcc, 0x1a1f3a);
+                gridHelper.material.opacity = 0.2;
+                gridHelper.material.transparent = true;
+                this.scene.add(gridHelper);
+            },
+            
+            setupVehicle() {
+                console.log('setupVehicle() called - starting...');
+                this.vehicle.group = new THREE.Group();
+                this.scene.add(this.vehicle.group);
+                console.log('Vehicle group created and added to scene');
+                
+                // Create SUPER VISIBLE base plate - sits ON the ground
+                const baseGeometry = new THREE.BoxGeometry(8, 0.5, 8);
+                console.log('Base geometry created');
+                const baseMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0x00ffff, // Bright cyan
+                    transparent: false
+                });
+                console.log('Base material created');
+                
+                this.basePlate = new THREE.Mesh(baseGeometry, baseMaterial);
+                this.basePlate.position.set(0, -0.25, 0); // Top at y=0, sitting on ground at y=-0.5
+                
+                // Add BRIGHT grid lines
+                const gridGeometry = new THREE.EdgesGeometry(baseGeometry);
+                const gridMaterial = new THREE.LineBasicMaterial({ color: 0xffff00, linewidth: 5 });
+                const gridLines = new THREE.LineSegments(gridGeometry, gridMaterial);
+                this.basePlate.add(gridLines);
+                
+                // Add grid on top
+                const gridLinesGroup = new THREE.Group();
+                const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffff00 });
+                
+                for (let x = -3.5; x <= 3.5; x += 1) {
+                    const points = [
+                        new THREE.Vector3(x, 0.26, -3.5),
+                        new THREE.Vector3(x, 0.26, 3.5)
+                    ];
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const line = new THREE.Line(geometry, lineMaterial);
+                    gridLinesGroup.add(line);
+                }
+                
+                for (let z = -3.5; z <= 3.5; z += 1) {
+                    const points = [
+                        new THREE.Vector3(-3.5, 0.26, z),
+                        new THREE.Vector3(3.5, 0.26, z)
+                    ];
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const line = new THREE.Line(geometry, lineMaterial);
+                    gridLinesGroup.add(line);
+                }
+                
+                this.basePlate.add(gridLinesGroup);
+                this.basePlate.visible = true;
+                this.basePlate.renderOrder = 999; // Render on top
+                this.scene.add(this.basePlate);
+                this.basePlate.userData = { isBase: true };
+                
+                console.log('Base plate created. Position:', this.basePlate.position, 'Visible:', this.basePlate.visible);
+            },
+            
+            removeLastBlock() {
+                if (this.vehicle.blocks.length > 0) {
+                    const block = this.vehicle.blocks.pop();
+                    const type = block.userData.type;
+                    
+                    // Refund materials
+                    const cost = this.blockCosts[type];
+                    this.materials.iron += cost.iron;
+                    this.materials.copper += cost.copper;
+                    this.updateMaterialDisplay();
+                    
+                    this.vehicle.blockCounts[type]--;
+                    this.vehicle.group.remove(block);
+                    document.getElementById('blockCount').textContent = this.vehicle.blocks.length;
+                }
+            },
+            
+            clearVehicle() {
+                // Refund all materials
+                this.vehicle.blocks.forEach(block => {
+                    const cost = this.blockCosts[block.userData.type];
+                    this.materials.iron += cost.iron;
+                    this.materials.copper += cost.copper;
+                });
+                
+                this.vehicle.blocks.forEach(block => this.vehicle.group.remove(block));
+                this.vehicle.blocks = [];
+                this.vehicle.blockCounts = { armor: 0, weapon: 0, engine: 0, core: 0, wheel: 0, spike: 0, largewheel: 0 };
+                document.getElementById('blockCount').textContent = 0;
+                this.updateMaterialDisplay();
+            },
+            
+            createEnemies() {
+                // Clear existing enemies
+                this.enemies.forEach(enemy => {
+                    if (enemy.parent) {
+                        this.scene.remove(enemy);
+                    }
+                });
+                this.enemies = [];
+                
+                // Update wave display
+                document.getElementById('waveNumber').textContent = this.waveNumber;
+                
+                // Number of enemies scales with wave (1-2 for wave 1, up to 4 for later waves)
+                const enemyCount = Math.min(1 + Math.floor(this.waveNumber / 2), 4);
+                document.getElementById('enemyCount').textContent = enemyCount;
+                
+                for (let i = 0; i < enemyCount; i++) {
+                    const enemy = this.createEnemyVehicle(i);
+                    
+                    const angle = (i / enemyCount) * Math.PI * 2;
+                    const distance = 15 + (this.waveNumber * 2); // Enemies start farther away in later waves
+                    enemy.position.set(Math.cos(angle) * distance, 0.5, Math.sin(angle) * distance);
+                    enemy.userData = { 
+                        health: enemy.userData.totalHealth,
+                        maxHealth: enemy.userData.totalHealth,
+                        active: false,
+                        blocks: enemy.userData.blocks
+                    };
+                    
+                    this.enemies.push(enemy);
+                    this.scene.add(enemy);
+                }
+            },
+            
+            createEnemyVehicle(enemyIndex) {
+                const enemyGroup = new THREE.Group();
+                const enemyBlocks = [];
+                
+                // Enemy design scales with wave number
+                const hasCore = true;
+                const armorCount = Math.min(2 + this.waveNumber, 8);
+                const weaponCount = Math.min(1 + Math.floor(this.waveNumber / 2), 4);
+                const wheelCount = Math.min(2 + Math.floor(this.waveNumber / 3), 4);
+                const hasSpikeChance = this.waveNumber > 2 ? 0.5 : 0;
+                
+                let totalHealth = 0;
+                
+                // Add core (always at center)
+                const coreGeometry = this.createBlockGeometry('core');
+                const coreMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0xff0000,
+                    emissive: 0xff0000,
+                    emissiveIntensity: 0.8
+                });
+                const coreBlock = new THREE.Mesh(coreGeometry, coreMaterial);
+                coreBlock.position.set(0, 0, 0);
+                const coreHealth = this.blockMaxHealth.core;
+                coreBlock.userData = { type: 'core', health: coreHealth, maxHealth: coreHealth };
+                enemyBlocks.push(coreBlock);
+                enemyGroup.add(coreBlock);
+                totalHealth += coreHealth;
+                
+                // Add armor blocks around core
+                const armorPositions = [
+                    [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1], // sides
+                    [0, 1, 0], [1, 1, 0], [-1, 1, 0], [0, 1, 1]  // top layer
+                ];
+                for (let j = 0; j < Math.min(armorCount, armorPositions.length); j++) {
+                    const armorGeometry = this.createBlockGeometry('armor');
+                    const armorMaterial = new THREE.MeshStandardMaterial({ 
+                        color: 0xff3333,
+                        emissive: 0xff0000,
+                        emissiveIntensity: 0.5
+                    });
+                    const armorBlock = new THREE.Mesh(armorGeometry, armorMaterial);
+                    armorBlock.position.set(...armorPositions[j]);
+                    const armorHealth = this.blockMaxHealth.armor * 0.8; // Enemy armor slightly weaker
+                    armorBlock.userData = { type: 'armor', health: armorHealth, maxHealth: armorHealth };
+                    enemyBlocks.push(armorBlock);
+                    enemyGroup.add(armorBlock);
+                    totalHealth += armorHealth;
+                }
+                
+                // Add weapon blocks
+                const weaponPositions = [[1, 0, 1], [-1, 0, 1], [1, 0, -1], [-1, 0, -1]];
+                for (let j = 0; j < Math.min(weaponCount, weaponPositions.length); j++) {
+                    const weaponGeometry = this.createBlockGeometry('weapon');
+                    const weaponMaterial = new THREE.MeshStandardMaterial({ 
+                        color: 0xff1744,
+                        emissive: 0xff0000,
+                        emissiveIntensity: 0.6
+                    });
+                    const weaponBlock = new THREE.Mesh(weaponGeometry, weaponMaterial);
+                    weaponBlock.position.set(...weaponPositions[j]);
+                    const weaponHealth = this.blockMaxHealth.weapon * 0.8;
+                    weaponBlock.userData = { type: 'weapon', health: weaponHealth, maxHealth: weaponHealth };
+                    enemyBlocks.push(weaponBlock);
+                    enemyGroup.add(weaponBlock);
+                    totalHealth += weaponHealth;
+                }
+                
+                // Add wheels
+                const wheelPositions = [[0.5, -0.5, 1], [-0.5, -0.5, 1], [0.5, -0.5, -1], [-0.5, -0.5, -1]];
+                for (let j = 0; j < Math.min(wheelCount, wheelPositions.length); j++) {
+                    const wheelGeometry = this.createBlockGeometry('wheel');
+                    const wheelMaterial = new THREE.MeshStandardMaterial({ 
+                        color: 0x330000,
+                        emissive: 0xff0000,
+                        emissiveIntensity: 0.3
+                    });
+                    const wheelBlock = new THREE.Mesh(wheelGeometry, wheelMaterial);
+                    wheelBlock.position.set(...wheelPositions[j]);
+                    const wheelHealth = this.blockMaxHealth.wheel * 0.8;
+                    wheelBlock.userData = { type: 'wheel', health: wheelHealth, maxHealth: wheelHealth };
+                    enemyBlocks.push(wheelBlock);
+                    enemyGroup.add(wheelBlock);
+                    totalHealth += wheelHealth;
+                }
+                
+                // Add spikes for advanced waves
+                if (Math.random() < hasSpikeChance) {
+                    const spikePositions = [[0, 0, 2], [0, 0, -2]];
+                    for (let j = 0; j < 2; j++) {
+                        const spikeGeometry = this.createBlockGeometry('spike');
+                        const spikeMaterial = new THREE.MeshStandardMaterial({ 
+                            color: 0xff4400,
+                            emissive: 0xff0000,
+                            emissiveIntensity: 0.7
+                        });
+                        const spikeBlock = new THREE.Mesh(spikeGeometry, spikeMaterial);
+                        spikeBlock.position.set(...spikePositions[j]);
+                        const spikeHealth = this.blockMaxHealth.spike * 0.8;
+                        spikeBlock.userData = { type: 'spike', health: spikeHealth, maxHealth: spikeHealth };
+                        enemyBlocks.push(spikeBlock);
+                        enemyGroup.add(spikeBlock);
+                        totalHealth += spikeHealth;
+                    }
+                }
+                
+                enemyGroup.userData = { blocks: enemyBlocks, totalHealth: totalHealth };
+                return enemyGroup;
+            },
+            
+            resetBattle() {
+                // Reset player position to base plate (on top of it)
+                this.vehicle.group.position.set(0, 0.5, 0);
+                this.vehicle.group.rotation.set(0, 0, 0);
+                
+                // DON'T reset health - use core health instead
+                
+                // Reset score
+                this.score = 0;
+                
+                // Ensure base plate is visible and in scene
+                if (!this.basePlate.parent) {
+                    this.scene.add(this.basePlate);
+                }
+                this.basePlate.visible = true;
+                
+                // Recreate enemies
+                this.createEnemies();
+                document.getElementById('enemyCount').textContent = '2';
+            },
+            
+            setupControls() {
+                this.keys = {};
+                this.mouse = { x: 0, y: 0, down: false, lastX: 0, lastY: 0, rightDown: false };
+                this.raycaster = new THREE.Raycaster();
+                this.mouseVector = new THREE.Vector2();
+                this.previewBlock = null;
+                this.draggingBlock = null;
+                this.placementGrid = [];
+                
+                // Create placement grid (blocks sit on top of base plate)
+                // Block centers are at y = 0.5, 1.5, 2.5, etc (sitting on top of base, not inside it)
+                for (let x = -3; x <= 3; x++) {
+                    for (let y = 0; y <= 8; y++) {
+                        for (let z = -3; z <= 3; z++) {
+                            this.placementGrid.push(new THREE.Vector3(x, y + 0.5, z));
+                        }
+                    }
+                }
+                
+                this.createPreviewBlock();
+                
+                window.addEventListener('keydown', (e) => {
+                    this.keys[e.key.toLowerCase()] = true;
+                    
+                    // Number keys to select block types (1-7)
+                    if (this.mode === 'build') {
+                        const blockTypes = ['armor', 'weapon', 'spike', 'engine', 'core', 'wheel', 'largewheel'];
+                        const keyNum = parseInt(e.key);
+                        if (keyNum >= 1 && keyNum <= 7) {
+                            this.selectedBlockType = blockTypes[keyNum - 1];
+                            console.log('Selected block type:', this.selectedBlockType);
+                            
+                            // Update UI
+                            document.querySelectorAll('.block-type').forEach(el => {
+                                el.classList.remove('active');
+                                if (el.dataset.type === this.selectedBlockType) {
+                                    el.classList.add('active');
+                                }
+                            });
+                            
+                            // Update preview
+                            this.updatePreviewBlockType();
+                        }
+                    }
+                    
+                    // R key to rotate blocks in build mode
+                    if (e.key.toLowerCase() === 'r' && this.mode === 'build') {
+                        this.blockRotation = (this.blockRotation + 90) % 360;
+                        // Update preview block rotation
+                        if (this.previewBlock) {
+                            this.previewBlock.rotation.y = (this.blockRotation * Math.PI) / 180;
+                        }
+                        // Update dragging block rotation
+                        if (this.draggingBlock) {
+                            this.draggingBlock.rotation.y = (this.blockRotation * Math.PI) / 180;
+                        }
+                    }
+                });
+                window.addEventListener('keyup', (e) => this.keys[e.key.toLowerCase()] = false);
+                
+                const canvas = document.getElementById('gameCanvas');
+                
+                // Initialize mouse position
+                this.mouse.lastX = window.innerWidth / 2;
+                this.mouse.lastY = window.innerHeight / 2;
+                
+                canvas.addEventListener('mousedown', (e) => {
+                    if (e.button === 2) { // Right click
+                        this.mouse.rightDown = true;
+                        this.mouse.lastX = e.clientX;
+                        this.mouse.lastY = e.clientY;
+                        e.preventDefault();
+                    } else if (e.button === 0 && this.mode === 'build') { // Left click
+                        // Just place block immediately at preview location
+                        if (this.previewBlock.visible) {
+                            this.placeBlockAtPreview();
+                        }
+                    }
+                });
+                
+                canvas.addEventListener('mouseup', (e) => {
+                    if (e.button === 2) {
+                        this.mouse.rightDown = false;
+                    }
+                });
+                
+                canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+                
+                canvas.addEventListener('mousemove', (e) => {
+                    this.mouseVector.x = (e.clientX / window.innerWidth) * 2 - 1;
+                    this.mouseVector.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                    
+                    if (this.mode === 'build') {
+                        if (this.mouse.rightDown) {
+                            const deltaX = e.clientX - this.mouse.lastX;
+                            const deltaY = e.clientY - this.mouse.lastY;
+                            
+                            // Orbit camera around the center (inverted controls)
+                            const rotationSpeed = 0.005;
+                            
+                            // Get current spherical coordinates
+                            const radius = this.camera.position.length();
+                            let theta = Math.atan2(this.camera.position.x, this.camera.position.z); // horizontal angle
+                            let phi = Math.acos(this.camera.position.y / radius); // vertical angle from top
+                            
+                            // Update angles (inverted)
+                            theta += deltaX * rotationSpeed; // Inverted horizontal
+                            phi -= deltaY * rotationSpeed; // Inverted vertical
+                            
+                            // Clamp vertical angle to prevent flipping
+                            phi = Math.max(0.1, Math.min(Math.PI - 0.1, phi));
+                            
+                            // Convert back to cartesian coordinates
+                            this.camera.position.x = radius * Math.sin(phi) * Math.sin(theta);
+                            this.camera.position.y = radius * Math.cos(phi);
+                            this.camera.position.z = radius * Math.sin(phi) * Math.cos(theta);
+                            
+                            this.camera.lookAt(0, 0, 0);
+                            
+                            this.mouse.lastX = e.clientX;
+                            this.mouse.lastY = e.clientY;
+                        } else {
+                            this.updatePreview();
+                        }
+                    }
+                });
+                
+                canvas.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const zoomSpeed = 0.1;
+                    const direction = new THREE.Vector3();
+                    direction.subVectors(new THREE.Vector3(0, 0, 0), this.camera.position).normalize();
+                    
+                    if (e.deltaY < 0) {
+                        this.camera.position.addScaledVector(direction, zoomSpeed);
+                    } else {
+                        this.camera.position.addScaledVector(direction, -zoomSpeed);
+                    }
+                    
+                    const distance = this.camera.position.length();
+                    if (distance < 5) {
+                        this.camera.position.setLength(5);
+                    } else if (distance > 25) {
+                        this.camera.position.setLength(25);
+                    }
+                });
+                
+                document.querySelectorAll('.block-type').forEach(el => {
+                    el.addEventListener('click', () => {
+                        document.querySelectorAll('.block-type').forEach(e => e.classList.remove('active'));
+                        el.classList.add('active');
+                        this.selectedBlockType = el.dataset.type;
+                        this.updatePreviewBlockType();
+                    });
+                });
+            },
+            
+            createPreviewBlock() {
+                const geometry = this.createBlockGeometry(this.selectedBlockType);
+                const material = new THREE.MeshStandardMaterial({ 
+                    color: this.blockColors[this.selectedBlockType],
+                    transparent: true,
+                    opacity: 0.5,
+                    emissive: this.blockColors[this.selectedBlockType],
+                    emissiveIntensity: 0.5
+                });
+                
+                this.previewBlock = new THREE.Mesh(geometry, material);
+                
+                const edgesGeometry = new THREE.EdgesGeometry(geometry);
+                const edgesMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+                const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
+                this.previewBlock.add(edges);
+                
+                this.previewBlock.visible = false;
+                this.scene.add(this.previewBlock);
+            },
+            
+            updatePreviewBlockType() {
+                if (this.previewBlock) {
+                    // Remove old preview
+                    this.scene.remove(this.previewBlock);
+                    // Create new preview with correct shape
+                    this.createPreviewBlock();
+                }
+            },
+            
+            updatePreview() {
+                if (!this.previewBlock) return;
+                
+                try {
+                    this.raycaster.setFromCamera(this.mouseVector, this.camera);
+                    
+                    // Check intersection with existing blocks first
+                    const intersects = this.raycaster.intersectObjects(this.vehicle.blocks, false);
+                    let targetPoint = null;
+                    
+                    if (intersects.length > 0 && intersects[0].face) {
+                        // Get the face normal to determine placement direction
+                        const intersection = intersects[0];
+                        const normal = intersection.face.normal.clone();
+                        
+                        // Transform normal to world space
+                        normal.transformDirection(intersection.object.matrixWorld);
+                        
+                        // Get the intersection point and add normal to get adjacent position
+                        targetPoint = intersection.point.clone().add(normal.multiplyScalar(0.5));
+                    } else {
+                        // Fall back to base plate intersection
+                        const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+                        targetPoint = new THREE.Vector3();
+                        this.raycaster.ray.intersectPlane(plane, targetPoint);
+                    }
+                    
+                    if (targetPoint) {
+                        // Snap to nearest grid position
+                        let closestDist = Infinity;
+                        let closestPos = null;
+                        
+                        for (const gridPos of this.placementGrid) {
+                            const dist = targetPoint.distanceTo(gridPos);
+                            if (dist < closestDist) {
+                                closestDist = dist;
+                                closestPos = gridPos;
+                            }
+                        }
+                        
+                        if (closestPos && this.isPositionValid(closestPos)) {
+                            this.previewBlock.position.copy(closestPos);
+                            this.previewBlock.visible = true;
+                        } else {
+                            this.previewBlock.visible = false;
+                        }
+                    } else {
+                        this.previewBlock.visible = false;
+                    }
+                } catch (error) {
+                    // Silently handle errors to prevent console spam
+                    this.previewBlock.visible = false;
+                }
+            },
+            
+            isPositionValid(pos) {
+                // Check if position is already occupied
+                for (const block of this.vehicle.blocks) {
+                    const blockWorldPos = new THREE.Vector3();
+                    block.getWorldPosition(blockWorldPos);
+                    if (blockWorldPos.distanceTo(pos) < 0.5) {
+                        return false;
+                    }
+                }
+                
+                // Check if within base plate bounds (7x7 grid)
+                if (Math.abs(pos.x) > 3 || Math.abs(pos.z) > 3) {
+                    return false;
+                }
+                
+                // If no blocks exist, can place anywhere on base (y = 0.5)
+                if (this.vehicle.blocks.length === 0) {
+                    return pos.y === 0.5;
+                }
+                
+                // Other blocks must be adjacent to at least one existing block or on the base
+                let hasAdjacent = false;
+                
+                // Check if on base plate (bottom layer)
+                if (pos.y === 0.5) {
+                    hasAdjacent = true;
+                }
+                
+                // Check adjacency to existing blocks
+                for (const block of this.vehicle.blocks) {
+                    const blockWorldPos = new THREE.Vector3();
+                    block.getWorldPosition(blockWorldPos);
+                    const distance = blockWorldPos.distanceTo(pos);
+                    
+                    // Adjacent means exactly 1 unit away (sharing a face)
+                    if (Math.abs(distance - 1.0) < 0.1) {
+                        hasAdjacent = true;
+                        break;
+                    }
+                }
+                
+                return hasAdjacent;
+            },
+            
+            placeBlockAtPreview() {
+                if (!this.previewBlock || !this.previewBlock.visible) return;
+                
+                const worldPos = this.previewBlock.position.clone();
+                const type = this.selectedBlockType;
+                
+                console.log('Attempting to place block type:', type, 'at position:', worldPos);
+                
+                // Only allow one core
+                if (type === 'core' && this.vehicle.blockCounts.core > 0) {
+                    alert('You can only have one CORE block!');
+                    return;
+                }
+                
+                const cost = this.blockCosts[type];
+                
+                // Check if player has enough materials
+                if (this.materials.iron < cost.iron || this.materials.copper < cost.copper) {
+                    alert(`Not enough materials!\nNeed: ${cost.iron} Iron, ${cost.copper} Copper\nHave: ${this.materials.iron} Iron, ${this.materials.copper} Copper`);
+                    return;
+                }
+                
+                // Deduct materials
+                this.materials.iron -= cost.iron;
+                this.materials.copper -= cost.copper;
+                this.updateMaterialDisplay();
+                
+                const geometry = this.createBlockGeometry(type);
+                const material = new THREE.MeshStandardMaterial({ 
+                    color: this.blockColors[type],
+                    emissive: this.blockColors[type],
+                    emissiveIntensity: 0.3,
+                    metalness: 0.8,
+                    roughness: 0.2
+                });
+                
+                const block = new THREE.Mesh(geometry, material);
+                
+                const edgesGeometry = new THREE.EdgesGeometry(geometry);
+                const edgesMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+                const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
+                block.add(edges);
+                
+                block.position.copy(worldPos);
+                block.rotation.y = (this.blockRotation * Math.PI) / 180;
+                block.userData = { 
+                    type: type, 
+                    health: this.blockMaxHealth[type],
+                    maxHealth: this.blockMaxHealth[type],
+                    rotation: this.blockRotation 
+                };
+                
+                this.vehicle.blocks.push(block);
+                this.vehicle.blockCounts[type]++;
+                this.vehicle.group.add(block);
+                
+                document.getElementById('blockCount').textContent = this.vehicle.blocks.length;
+                
+                console.log('Successfully placed block!');
+            },
+            
+            updateMaterialDisplay() {
+                document.getElementById('ironCount').textContent = this.materials.iron;
+                document.getElementById('copperCount').textContent = this.materials.copper;
+            },
+            
+            toggleMode() {
+                this.mode = this.mode === 'build' ? 'battle' : 'build';
+                const btn = document.getElementById('modeToggle');
+                
+                if (this.mode === 'battle') {
+                    // Check if player has at least one of each required block type
+                    const counts = this.vehicle.blockCounts;
+                    const hasWeapon = counts.weapon > 0 || counts.spike > 0;
+                    const hasWheel = counts.wheel > 0 || counts.largewheel > 0;
+                    
+                    if (!hasWeapon || counts.engine === 0 || counts.core === 0 || !hasWheel) {
+                        alert('You need at least:\n• Core (purple)\n• Engine (gold)\n• Wheel or Large Wheel\n• Weapon or Spike\n\nArmor (blue) is optional but recommended!');
+                        this.mode = 'build';
+                        return;
+                    }
+                    
+                    // Check if wheels are on the bottom layer
+                    const wheelBlocks = this.vehicle.blocks.filter(b => b.userData.type === 'wheel' || b.userData.type === 'largewheel');
+                    const bottomWheels = wheelBlocks.filter(b => {
+                        const worldPos = new THREE.Vector3();
+                        b.getWorldPosition(worldPos);
+                        return worldPos.y <= 0.6;
+                    });
+                    
+                    if (bottomWheels.length === 0) {
+                        alert('Wheels must be placed on the bottom layer of your vehicle!');
+                        this.mode = 'build';
+                        return;
+                    }
+                    
+                    // Calculate total vehicle weight
+                    let totalWeight = 0;
+                    this.vehicle.blocks.forEach(block => {
+                        totalWeight += this.blockWeights[block.userData.type] || 1;
+                    });
+                    
+                    // Calculate weight capacity from wheels
+                    const regularWheelCapacity = counts.wheel * this.wheelCapacity.wheel;
+                    const largeWheelCapacity = counts.largewheel * this.wheelCapacity.largewheel;
+                    const totalWheelCapacity = regularWheelCapacity + largeWheelCapacity;
+                    
+                    // Check engine-to-wheel ratio (need 1 engine per 2 wheels of any type)
+                    const totalWheels = counts.wheel + counts.largewheel;
+                    const requiredEngines = Math.ceil(totalWheels / 2);
+                    if (counts.engine < requiredEngines) {
+                        alert(`You need ${requiredEngines} engine(s) to power ${totalWheels} wheel(s)!\n(1 engine powers 2 wheels)`);
+                        this.mode = 'build';
+                        return;
+                    }
+                    
+                    // Check if vehicle is too heavy for wheels
+                    if (totalWeight > totalWheelCapacity) {
+                        const deficit = totalWeight - totalWheelCapacity;
+                        alert(`Your vehicle is too heavy!\nWeight: ${totalWeight.toFixed(1)}\nWheel Capacity: ${totalWheelCapacity.toFixed(1)}\n\nAdd more wheels or engines, or remove heavy blocks.`);
+                        this.mode = 'build';
+                        return;
+                    }
+                    
+                    btn.textContent = 'BACK TO BUILD';
+                    document.body.classList.add('battle-mode');
+                    this.basePlate.visible = false;
+                    
+                    // Don't clear vehicle - keep existing blocks
+                    // Reset vehicle position
+                    this.vehicle.group.position.set(0, 0.5, 0);
+                    this.vehicle.group.rotation.set(0, 0, 0);
+                    
+                    // Calculate stats from blocks
+                    this.maxHealth = 100 + (counts.armor * 20);
+                    this.health = this.maxHealth;
+                    
+                    // Speed calculation with weight penalty and engine boost
+                    const poweredWheels = Math.min(totalWheels, counts.engine * 2);
+                    const baseSpeed = 0.08 + (poweredWheels * 0.04); // Doubled from 0.04 and 0.02
+                    
+                    // Large wheels add extra speed
+                    const largeWheelBonus = counts.largewheel * 0.06; // Doubled from 0.03
+                    
+                    // Weight penalty: reduce speed if approaching weight limit
+                    const weightRatio = totalWeight / totalWheelCapacity;
+                    const weightPenalty = weightRatio * 0.5; // Up to 50% speed reduction
+                    
+                    // Engine bonus: more engines reduce weight penalty
+                    const engineBonus = counts.engine * 0.03; // Doubled from 0.015
+                    
+                    this.speed = Math.max(0.04, baseSpeed + largeWheelBonus + engineBonus - weightPenalty);
+                    
+                    // Rotation speed (slower base, affected by wheels)
+                    this.rotationSpeed = 0.01 + (poweredWheels * 0.003) + (counts.largewheel * 0.002);
+                    
+                    this.fireRate = Math.max(100, 300 - (counts.weapon * 30) - (counts.spike * 20));
+                    
+                    // Set health bar based on core health
+                    const coreBlock = this.vehicle.blocks.find(b => b.userData.type === 'core');
+                    if (coreBlock) {
+                        const healthPercent = (coreBlock.userData.health / coreBlock.userData.maxHealth) * 100;
+                        document.getElementById('healthFill').style.width = healthPercent + '%';
+                    }
+                    
+                    // Recreate enemies for new battle
+                    this.createEnemies();
+                    this.enemies.forEach(e => e.userData.active = true);
+                    this.camera.position.set(0, 5, 10);
+                    this.camera.lookAt(0, 0, 0);
+                } else {
+                    btn.textContent = 'START BATTLE';
+                    document.body.classList.remove('battle-mode');
+                    this.basePlate.visible = true;
+                    this.enemies.forEach(e => e.userData.active = false);
+                    this.camera.position.set(0, 5, 10);
+                    this.camera.lookAt(0, 0, 0);
+                }
+            },
+            
+            shoot() {
+                // Find all weapon blocks (only laser weapons, not spikes)
+                const weaponBlocks = this.vehicle.blocks.filter(b => b.userData.type === 'weapon');
+                
+                if (weaponBlocks.length === 0) return;
+                
+                // Fire from each weapon block
+                weaponBlocks.forEach(weaponBlock => {
+                    const worldPos = new THREE.Vector3();
+                    weaponBlock.getWorldPosition(worldPos);
+                    
+                    // Create laser projectile
+                    const geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.8);
+                        
+                    const material = new THREE.MeshBasicMaterial({ 
+                        color: 0xff1744,
+                        emissive: 0xff1744,
+                        emissiveIntensity: 1
+                    });
+                    const bullet = new THREE.Mesh(geometry, material);
+                    
+                    bullet.position.copy(worldPos);
+                    
+                    const direction = new THREE.Vector3(0, 0, -1);
+                    direction.applyQuaternion(this.vehicle.group.quaternion);
+                    
+                    // Orient bullet in direction of travel
+                    bullet.quaternion.copy(this.vehicle.group.quaternion);
+                    bullet.rotateX(Math.PI / 2);
+                    
+                    bullet.userData = { 
+                        velocity: direction.multiplyScalar(0.5),
+                        isSpike: false
+                    };
+                    
+                    this.scene.add(bullet);
+                    
+                    setTimeout(() => this.scene.remove(bullet), 3000);
+                });
+            },
+            
+            updateBattle() {
+                if (this.mode !== 'battle') return;
+                
+                const speed = this.speed || 0.15; // Use calculated speed
+                const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.vehicle.group.quaternion);
+                
+                // W/S for forward/backward movement
+                if (this.keys['w']) this.vehicle.group.position.addScaledVector(forward, speed);
+                if (this.keys['s']) this.vehicle.group.position.addScaledVector(forward, -speed);
+                
+                // A/D for rotation - use calculated rotation speed
+                const rotationSpeed = this.rotationSpeed || 0.02;
+                if (this.keys['a']) this.vehicle.group.rotation.y += rotationSpeed;
+                if (this.keys['d']) this.vehicle.group.rotation.y -= rotationSpeed;
+                
+                const fireRate = this.fireRate || 300;
+                if (this.keys[' '] && !this.lastShot) {
+                    this.shoot();
+                    this.lastShot = Date.now();
+                }
+                if (this.lastShot && Date.now() - this.lastShot > fireRate) {
+                    this.lastShot = null;
+                }
+                
+                this.scene.children.forEach(obj => {
+                    if (obj.userData.velocity && (obj.geometry.type === 'CylinderGeometry' || obj.geometry.type === 'ConeGeometry')) {
+                        obj.position.add(obj.userData.velocity);
+                        
+                        this.enemies.forEach(enemy => {
+                            if (enemy.userData.active && obj.position.distanceTo(enemy.position) < 3) {
+                                // Damage random block on enemy
+                                const enemyBlocks = enemy.userData.blocks.filter(b => b.userData.health > 0);
+                                if (enemyBlocks.length > 0) {
+                                    const targetBlock = enemyBlocks[Math.floor(Math.random() * enemyBlocks.length)];
+                                    targetBlock.userData.health -= 10;
+                                    
+                                    this.scene.remove(obj);
+                                    
+                                    // Visual feedback
+                                    const originalColor = targetBlock.material.color.getHex();
+                                    targetBlock.material.color.setHex(0xffffff);
+                                    setTimeout(() => {
+                                        if (targetBlock.parent) {
+                                            targetBlock.material.color.setHex(originalColor);
+                                        }
+                                    }, 100);
+                                    
+                                    // Remove destroyed block
+                                    if (targetBlock.userData.health <= 0) {
+                                        enemy.remove(targetBlock);
+                                        const blockIndex = enemy.userData.blocks.indexOf(targetBlock);
+                                        if (blockIndex > -1) {
+                                            enemy.userData.blocks.splice(blockIndex, 1);
+                                        }
+                                        
+                                        // Check if core destroyed
+                                        const hasCore = enemy.userData.blocks.some(b => b.userData.type === 'core');
+                                        if (!hasCore || enemy.userData.blocks.length === 0) {
+                                            this.scene.remove(enemy);
+                                            this.score++;
+                                            
+                                            // Award materials for defeating enemy
+                                            const ironReward = 15 + Math.floor(Math.random() * 10) + (this.waveNumber * 5);
+                                            const copperReward = 10 + Math.floor(Math.random() * 10) + (this.waveNumber * 3);
+                                            this.materials.iron += ironReward;
+                                            this.materials.copper += copperReward;
+                                            this.updateMaterialDisplay();
+                                            
+                                            const remainingEnemies = this.enemies.filter(e => e.parent).length;
+                                            document.getElementById('enemyCount').textContent = remainingEnemies;
+                                    
+                                            // Check for victory
+                                            if (remainingEnemies === 0) {
+                                                setTimeout(() => {
+                                                    this.waveNumber++;
+                                                    this.battlesWon++;
+                                                    alert(`WAVE ${this.waveNumber - 1} COMPLETE!\nScore: ${this.score}\nBattles Won: ${this.battlesWon}\n\nPrepare for Wave ${this.waveNumber}!`);
+                                                    this.mode = 'build';
+                                                    document.getElementById('modeToggle').textContent = 'START BATTLE';
+                                                    document.body.classList.remove('battle-mode');
+                                                    this.basePlate.visible = true; // Show base plate
+                                                    this.resetBattle();
+                                                }, 500);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        
+                        if (obj.position.length() > 100) {
+                            this.scene.remove(obj);
+                        }
+                    }
+                });
+                
+                this.enemies.forEach(enemy => {
+                    if (!enemy.userData.active || enemy.userData.health <= 0) return;
+                    
+                    const direction = new THREE.Vector3()
+                        .subVectors(this.vehicle.group.position, enemy.position)
+                        .normalize();
+                    enemy.position.add(direction.multiplyScalar(0.05));
+                    enemy.lookAt(this.vehicle.group.position);
+                    
+                    const distanceToPlayer = enemy.position.distanceTo(this.vehicle.group.position);
+                    
+                    // Minimum speed required for spike damage (must be moving)
+                    const minSpikeSpeed = 0.08;
+                    const currentSpeed = this.speed || 0.1;
+                    const isMovingFast = (this.keys['w'] || this.keys['s']) && currentSpeed >= minSpikeSpeed;
+                    
+                    // Check for spike collision damage (only when moving fast)
+                    if (distanceToPlayer < 2 && this.vehicle.blockCounts.spike > 0 && isMovingFast) {
+                        if (!enemy.userData.lastSpikeHit || Date.now() - enemy.userData.lastSpikeHit > 500) {
+                            // Calculate spike damage based on player speed
+                            const speedMultiplier = Math.max(1, currentSpeed * 20); // Higher speed = more damage
+                            const spikeDamage = this.vehicle.blockCounts.spike * 5 * speedMultiplier;
+                            
+                            enemy.userData.health -= spikeDamage;
+                            enemy.userData.lastSpikeHit = Date.now();
+                            
+                            if (enemy.userData.health <= 0) {
+                                this.scene.remove(enemy);
+                                this.score++;
+                                
+                                // Award materials for defeating enemy
+                                const ironReward = 15 + Math.floor(Math.random() * 10); // 15-24 iron
+                                const copperReward = 10 + Math.floor(Math.random() * 10); // 10-19 copper
+                                this.materials.iron += ironReward;
+                                this.materials.copper += copperReward;
+                                this.updateMaterialDisplay();
+                                
+                                const remainingEnemies = this.enemies.filter(e => e.parent).length;
+                                document.getElementById('enemyCount').textContent = remainingEnemies;
+                                
+                                if (remainingEnemies === 0) {
+                                    setTimeout(() => {
+                                        this.waveNumber++;
+                                        this.battlesWon++;
+                                        alert(`WAVE ${this.waveNumber - 1} COMPLETE!\nScore: ${this.score}\nBattles Won: ${this.battlesWon}\n\nPrepare for Wave ${this.waveNumber}!`);
+                                        this.mode = 'build';
+                                        document.getElementById('modeToggle').textContent = 'START BATTLE';
+                                        document.body.classList.remove('battle-mode');
+                                        this.basePlate.visible = true;
+                                        this.resetBattle();
+                                    }, 500);
+                                }
+                                return;
+                            }
+                        }
+                    }
+                    
+                    // Regular enemy collision damage - ALWAYS applies
+                    if (distanceToPlayer < 3 &&
+                        (!enemy.userData.lastHit || Date.now() - enemy.userData.lastHit > 1000)) {
+                        
+                        // Damage random blocks instead of global health
+                        const damagableBlocks = this.vehicle.blocks.filter(b => b.userData.health > 0);
+                        
+                        if (damagableBlocks.length > 0) {
+                            // Pick random block to damage
+                            const targetBlock = damagableBlocks[Math.floor(Math.random() * damagableBlocks.length)];
+                            const baseDamage = 10;
+                            const spikeReduction = this.vehicle.blockCounts.spike > 0 ? 0.5 : 1.0;
+                            const actualDamage = baseDamage * spikeReduction;
+                            
+                            targetBlock.userData.health -= actualDamage;
+                            enemy.userData.lastHit = Date.now();
+                            
+                            // Visual feedback - flash damaged block red
+                            const originalColor = targetBlock.material.color.getHex();
+                            targetBlock.material.color.setHex(0xff0000);
+                            setTimeout(() => {
+                                if (targetBlock.parent) {
+                                    targetBlock.material.color.setHex(originalColor);
+                                }
+                            }, 200);
+                            
+                            document.getElementById('gameCanvas').classList.add('damage-flash');
+                            setTimeout(() => document.getElementById('gameCanvas').classList.remove('damage-flash'), 300);
+                            
+                            // Check if block is destroyed
+                            if (targetBlock.userData.health <= 0) {
+                                const blockType = targetBlock.userData.type;
+                                
+                                // Remove block from vehicle
+                                this.vehicle.group.remove(targetBlock);
+                                const blockIndex = this.vehicle.blocks.indexOf(targetBlock);
+                                if (blockIndex > -1) {
+                                    this.vehicle.blocks.splice(blockIndex, 1);
+                                    this.vehicle.blockCounts[blockType]--;
+                                    document.getElementById('blockCount').textContent = this.vehicle.blocks.length;
+                                }
+                                
+                                // Check if core was destroyed - lose battle
+                                if (blockType === 'core') {
+                                    alert(`CORE DESTROYED!\nWave: ${this.waveNumber}\nBattles Won: ${this.battlesWon}\nScore: ${this.score}\n\nWave progress reset!`);
+                                    this.waveNumber = 1; // Reset wave progression
+                                    this.battlesWon = 0;
+                                    this.mode = 'build';
+                                    document.getElementById('modeToggle').textContent = 'START BATTLE';
+                                    document.body.classList.remove('battle-mode');
+                                    this.basePlate.visible = true;
+                                    this.resetBattle();
+                                    return;
+                                }
+                            }
+                            
+                            // Update health bar based on core health
+                            const coreBlock = this.vehicle.blocks.find(b => b.userData.type === 'core');
+                            if (coreBlock) {
+                                const healthPercent = (coreBlock.userData.health / coreBlock.userData.maxHealth) * 100;
+                                document.getElementById('healthFill').style.width = healthPercent + '%';
+                            } else {
+                                document.getElementById('healthFill').style.width = '0%';
+                            }
+                        } else {
+                            // No blocks left - lose
+                            alert('ALL BLOCKS DESTROYED! You lose!\nScore: ' + this.score);
+                            this.mode = 'build';
+                            document.getElementById('modeToggle').textContent = 'START BATTLE';
+                            document.body.classList.remove('battle-mode');
+                            this.basePlate.visible = true;
+                            this.resetBattle();
+                            return;
+                        }
+                    }
+                });
+                
+                // Camera follows vehicle and looks in direction of mouse/vehicle facing
+                const cameraOffset = new THREE.Vector3(0, 5, 10);
+                cameraOffset.applyQuaternion(this.vehicle.group.quaternion);
+                this.camera.position.copy(this.vehicle.group.position).add(cameraOffset);
+                
+                const lookTarget = new THREE.Vector3().copy(this.vehicle.group.position);
+                lookTarget.y += 2;
+                this.camera.lookAt(lookTarget);
+            },
+            
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                
+                this.updateBattle();
+                
+                this.renderer.render(this.scene, this.camera);
+            },
+            
+            onResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        };
+        
+        game.init();
+    </script>
+</body>
+</html>
