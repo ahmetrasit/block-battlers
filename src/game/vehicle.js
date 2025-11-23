@@ -368,9 +368,12 @@ export class VehicleBuilder {
         wheelCapacity += counts.largewheel * WHEEL_CAPACITY.largewheel;
 
         // Calculate movement stats
-        const enginePower = counts.engine * 1.5;
+        const enginePower = counts.engine * 2.5; // Increased from 1.5 to 2.5
         const weightRatio = wheelCapacity > 0 ? totalWeight / wheelCapacity : Infinity;
-        const speedMultiplier = Math.max(0.2, Math.min(1, 1 / weightRatio));
+        const baseSpeedMultiplier = Math.max(0.2, Math.min(1, 1 / weightRatio));
+        // Add engine bonus: each engine adds 15% speed (up to +60% with 4 engines)
+        const engineBonus = counts.engine * 0.15;
+        const speedMultiplier = Math.min(2.0, baseSpeedMultiplier + engineBonus);
 
         // Calculate combat stats
         const weaponDamage = counts.weapon * 10;

@@ -379,8 +379,8 @@ export class ControlSystem {
         if (this.gameState.mode !== 'battle' || this.gameState.isPaused) return;
 
         const stats = this.vehicleBuilder.calculateVehicleStats();
-        const baseSpeed = 5 * stats.speedMultiplier;
-        const rotationSpeed = 2 * stats.speedMultiplier;
+        const baseSpeed = 10 * stats.speedMultiplier; // Doubled from 5 to 10
+        const rotationSpeed = 3 * stats.speedMultiplier; // Increased from 2 to 3
 
         // Forward/backward movement
         if (this.moveForward) {
@@ -455,6 +455,19 @@ export class ControlSystem {
                 modeToggle.style.borderColor = originalBorder;
             }, 200);
         }
+    }
+
+    /**
+     * Clear all input state (useful when switching modes)
+     */
+    clearInputState() {
+        this.keys = {};
+        this.moveForward = false;
+        this.moveBackward = false;
+        this.rotateLeft = false;
+        this.rotateRight = false;
+        this.isShooting = false;
+        this.lastZeroPress = 0;
     }
 
     /**

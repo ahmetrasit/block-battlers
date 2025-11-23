@@ -219,6 +219,9 @@ export class Game {
         this.vehicleBuilder.vehicleVelocity.set(0, 0, 0);
         this.vehicleBuilder.vehicleRotation = 0;
 
+        // Clear input state to prevent stuck keys
+        this.controlSystem.clearInputState();
+
         // Update UI
         this.uiManager.updateModeToggle('build');
         this.uiManager.toggleBattleMode(false);
