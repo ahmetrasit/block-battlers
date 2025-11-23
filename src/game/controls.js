@@ -27,6 +27,10 @@ export class ControlSystem {
         this.rotateRight = false;
         this.isShooting = false;
 
+        // Double-tap detection for battle start (press 0 twice quickly)
+        this.lastZeroPress = 0;
+        this.doubleTapDelay = 500; // milliseconds
+
         this.setupEventListeners();
     }
 
@@ -66,6 +70,27 @@ export class ControlSystem {
 
             if (keyNum >= 1 && keyNum <= 7) {
                 this.selectBlockType(blockTypes[keyNum - 1]);
+            }
+
+            // Double-tap 0 to start battle
+            if (event.key === '0') {
+                const currentTime = Date.now();
+                const timeSinceLastPress = currentTime - this.lastZeroPress;
+
+                if (timeSinceLastPress < this.doubleTapDelay) {
+                    // Double-tap detected! Start battle
+                    event.preventDefault();
+                    const modeToggle = document.getElementById('modeToggle');
+                    if (modeToggle) {
+                        modeToggle.click();
+                    }
+                    this.lastZeroPress = 0; // Reset
+                } else {
+                    // First tap
+                    this.lastZeroPress = currentTime;
+                    // Show visual feedback
+                    this.showDoubleTapIndicator();
+                }
             }
 
             // R key for rotation
@@ -410,6 +435,26 @@ export class ControlSystem {
             rotateRight: this.rotateRight,
             isShooting: this.isShooting
         };
+    }
+
+    /**
+     * Show visual indicator that first tap of double-tap was detected
+     */
+    showDoubleTapIndicator() {
+        // Flash the mode toggle button briefly
+        const modeToggle = document.getElementById('modeToggle');
+        if (modeToggle) {
+            const originalBg = modeToggle.style.background;
+            const originalBorder = modeToggle.style.borderColor;
+
+            modeToggle.style.background = 'linear-gradient(135deg, rgba(255, 255, 0, 0.5), rgba(255, 255, 0, 0.3))';
+            modeToggle.style.borderColor = '#ffff00';
+
+            setTimeout(() => {
+                modeToggle.style.background = originalBg;
+                modeToggle.style.borderColor = originalBorder;
+            }, 200);
+        }
     }
 
     /**
