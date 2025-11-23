@@ -73,25 +73,42 @@ export class VehicleBuilder {
             this.mouseVector.set(mouseX, mouseY);
             this.raycaster.setFromCamera(this.mouseVector, this.renderer.camera);
 
-            // Check intersection with existing blocks first
-            const intersects = this.raycaster.intersectObjects(this.gameState.vehicle.blocks, false);
+            // Create array of objects to check for intersections
+            const intersectObjects = [...this.gameState.vehicle.blocks];
+
+            // Add base plate if it exists
+            if (this.renderer.basePlate) {
+                intersectObjects.push(this.renderer.basePlate);
+            }
+
+            // Check intersection with blocks and base plate
+            const intersects = this.raycaster.intersectObjects(intersectObjects, false);
             let targetPoint = null;
 
-            if (intersects.length > 0 && intersects[0].face) {
-                // Get the face normal to determine placement direction
+            if (intersects.length > 0) {
                 const intersection = intersects[0];
-                const normal = intersection.face.normal.clone();
 
-                // Transform normal to world space
-                normal.transformDirection(intersection.object.matrixWorld);
+                // Check if we hit a block or the base plate
+                if (intersection.object === this.renderer.basePlate) {
+                    // Hit base plate - place on top of it
+                    targetPoint = intersection.point.clone();
+                    targetPoint.y = 0.5; // Blocks sit at y = 0.5 on the base
+                } else if (intersection.face) {
+                    // Hit an existing block
+                    const normal = intersection.face.normal.clone();
+                    normal.transformDirection(intersection.object.matrixWorld);
+                    targetPoint = intersection.point.clone().add(normal.multiplyScalar(0.5));
+                }
+            }
 
-                // Get the intersection point and add normal to get adjacent position
-                targetPoint = intersection.point.clone().add(normal.multiplyScalar(0.5));
-            } else {
-                // Fall back to base plate intersection
+            // If no intersection, use a plane at y = 0
+            if (!targetPoint) {
                 const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-                targetPoint = new THREE.Vector3();
-                this.raycaster.ray.intersectPlane(plane, targetPoint);
+                const planePoint = new THREE.Vector3();
+                if (this.raycaster.ray.intersectPlane(plane, planePoint)) {
+                    targetPoint = planePoint;
+                    targetPoint.y = 0.5;
+                }
             }
 
             if (targetPoint) {
@@ -111,6 +128,11 @@ export class VehicleBuilder {
                     this.previewBlock.position.copy(closestPos);
                     this.previewBlock.rotation.y = (this.gameState.blockRotation * Math.PI) / 180;
                     this.previewBlock.visible = true;
+
+                    // Make preview more visible
+                    if (this.previewBlock.material) {
+                        this.previewBlock.material.opacity = 0.7;
+                    }
                 } else {
                     this.previewBlock.visible = false;
                 }

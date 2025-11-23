@@ -146,14 +146,15 @@ export class Renderer {
      */
     setupBasePlate() {
         // Create visible base plate
-        const baseGeometry = new THREE.BoxGeometry(8, 0.5, 8);
-        const baseMaterial = new THREE.MeshBasicMaterial({
+        const baseGeometry = new THREE.BoxGeometry(7, 0.2, 7);
+        const baseMaterial = new THREE.MeshStandardMaterial({
             color: 0x00ffff,
-            transparent: false
+            metalness: 0.5,
+            roughness: 0.5
         });
 
         this.basePlate = new THREE.Mesh(baseGeometry, baseMaterial);
-        this.basePlate.position.set(0, -0.25, 0);
+        this.basePlate.position.set(0, -0.1, 0);
         this.basePlate.receiveShadow = true;
         this.basePlate.castShadow = false;
         this.scene.add(this.basePlate);
@@ -165,22 +166,22 @@ export class Renderer {
         const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
         this.basePlate.add(edges);
 
-        // Add grid on top of base plate
+        // Add grid on top of base plate - aligned with block placement positions
         const gridSize = 7;
         const gridMaterial = new THREE.LineBasicMaterial({
             color: 0xffff00,
             transparent: true,
-            opacity: 0.3
+            opacity: 0.5
         });
 
         const gridPoints = [];
         for (let i = -3; i <= 3; i++) {
-            // Horizontal lines
-            gridPoints.push(new THREE.Vector3(-3, 0.26, i));
-            gridPoints.push(new THREE.Vector3(3, 0.26, i));
+            // Horizontal lines - exactly at y = 0 (top of base plate)
+            gridPoints.push(new THREE.Vector3(-3, 0.01, i));
+            gridPoints.push(new THREE.Vector3(3, 0.01, i));
             // Vertical lines
-            gridPoints.push(new THREE.Vector3(i, 0.26, -3));
-            gridPoints.push(new THREE.Vector3(i, 0.26, 3));
+            gridPoints.push(new THREE.Vector3(i, 0.01, -3));
+            gridPoints.push(new THREE.Vector3(i, 0.01, 3));
         }
 
         const gridGeometry = new THREE.BufferGeometry().setFromPoints(gridPoints);

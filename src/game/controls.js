@@ -246,9 +246,8 @@ export class ControlSystem {
      */
     setupControlButtons() {
         // Clear all button
-        const clearButton = document.querySelector('button[onclick*="clearVehicle"]');
+        const clearButton = document.getElementById('clearAllButton');
         if (clearButton) {
-            clearButton.onclick = null;
             clearButton.addEventListener('click', () => {
                 if (confirm('Clear all blocks? This will refund all materials.')) {
                     this.vehicleBuilder.clearVehicle();
@@ -257,9 +256,8 @@ export class ControlSystem {
         }
 
         // Remove last button
-        const removeButton = document.querySelector('button[onclick*="removeLastBlock"]');
+        const removeButton = document.getElementById('removeLastButton');
         if (removeButton) {
-            removeButton.onclick = null;
             removeButton.addEventListener('click', () => {
                 this.vehicleBuilder.removeLastBlock();
             });
