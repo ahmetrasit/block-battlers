@@ -21,6 +21,10 @@ export class VehicleBuilder {
         this.raycaster = new THREE.Raycaster();
         this.mouseVector = new THREE.Vector2();
 
+        // Hover highlighting
+        this.hoveredBlock = null;
+        this.originalHoveredMaterial = null;
+
         // Vehicle physics
         this.vehicleVelocity = new THREE.Vector3();
         this.vehicleRotation = 0;
@@ -267,6 +271,38 @@ export class VehicleBuilder {
     }
 
     /**
+     * Remove a specific block
+     * @param {THREE.Mesh} blockToRemove - The block to remove
+     */
+    removeBlock(blockToRemove) {
+        if (!blockToRemove || !blockToRemove.userData || !blockToRemove.userData.type) return;
+
+        // Find block in array
+        const blockIndex = this.gameState.vehicle.blocks.indexOf(blockToRemove);
+        if (blockIndex === -1) return;
+
+        const type = blockToRemove.userData.type;
+
+        // Refund materials
+        const cost = BLOCK_COSTS[type];
+        this.gameState.refundMaterials(cost);
+
+        // Remove from blocks array
+        this.gameState.vehicle.blocks.splice(blockIndex, 1);
+
+        // Update counts
+        this.gameState.vehicle.blockCounts[type]--;
+
+        // Remove from scene
+        this.gameState.vehicle.group.remove(blockToRemove);
+        disposeBlock(blockToRemove);
+
+        // Update UI
+        document.getElementById('blockCount').textContent = this.gameState.vehicle.blocks.length;
+        this.updateMaterialDisplay();
+    }
+
+    /**
      * Clear entire vehicle
      */
     clearVehicle() {
@@ -414,6 +450,68 @@ export class VehicleBuilder {
         setTimeout(() => {
             block.material.emissive.copy(originalEmissive);
         }, 300);
+    }
+
+    /**
+     * Update hover state for blocks
+     * @param {number} mouseX - Normalized mouse X
+     * @param {number} mouseY - Normalized mouse Y
+     * @returns {THREE.Mesh|null} The hovered block or null
+     */
+    updateBlockHover(mouseX, mouseY) {
+        this.mouseVector.set(mouseX, mouseY);
+        this.raycaster.setFromCamera(this.mouseVector, this.renderer.camera);
+
+        // Check for intersection with vehicle blocks
+        const intersects = this.raycaster.intersectObjects(this.gameState.vehicle.blocks, false);
+
+        let newHoveredBlock = null;
+
+        if (intersects.length > 0) {
+            newHoveredBlock = intersects[0].object;
+        }
+
+        // Handle hover state changes
+        if (newHoveredBlock !== this.hoveredBlock) {
+            // Clear previous hover
+            if (this.hoveredBlock && this.originalHoveredMaterial) {
+                this.hoveredBlock.material = this.originalHoveredMaterial;
+                this.originalHoveredMaterial = null;
+            }
+
+            // Apply new hover
+            if (newHoveredBlock) {
+                // Store original material
+                this.originalHoveredMaterial = newHoveredBlock.material;
+
+                // Create highlighted material
+                const highlightMaterial = newHoveredBlock.material.clone();
+                highlightMaterial.emissiveIntensity = 0.6;
+                highlightMaterial.emissive.setHex(0xffffff);
+                newHoveredBlock.material = highlightMaterial;
+
+                // Change cursor to indicate clickable
+                document.body.style.cursor = 'pointer';
+            } else {
+                document.body.style.cursor = 'default';
+            }
+
+            this.hoveredBlock = newHoveredBlock;
+        }
+
+        return this.hoveredBlock;
+    }
+
+    /**
+     * Clear hover state
+     */
+    clearHoverState() {
+        if (this.hoveredBlock && this.originalHoveredMaterial) {
+            this.hoveredBlock.material = this.originalHoveredMaterial;
+            this.originalHoveredMaterial = null;
+            this.hoveredBlock = null;
+        }
+        document.body.style.cursor = 'default';
     }
 
     /**

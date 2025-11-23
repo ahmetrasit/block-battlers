@@ -190,6 +190,9 @@ export class Game {
             this.vehicleBuilder.previewBlock.visible = false;
         }
 
+        // Clear hover state when switching to battle mode
+        this.vehicleBuilder.clearHoverState();
+
         console.log(`Starting Wave ${this.gameState.waveNumber}`);
     }
 

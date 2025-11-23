@@ -73,11 +73,11 @@ export class ControlSystem {
                 this.rotateBlock();
             }
 
-            // Backspace to remove last block
-            if (event.key === 'Backspace') {
-                event.preventDefault();
-                this.vehicleBuilder.removeLastBlock();
-            }
+            // Backspace disabled - using right-click on blocks instead
+            // if (event.key === 'Backspace') {
+            //     event.preventDefault();
+            //     this.vehicleBuilder.removeLastBlock();
+            // }
         }
 
         // Battle mode controls
@@ -149,14 +149,21 @@ export class ControlSystem {
         this.normalizedMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         this.normalizedMouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        // Update preview block in build mode
-        if (this.gameState.mode === 'build' && !this.renderer.isOrbiting) {
-            this.vehicleBuilder.updatePreview(this.normalizedMouse.x, this.normalizedMouse.y);
+        // Build mode updates
+        if (this.gameState.mode === 'build') {
+            // Update preview block when not orbiting
+            if (!this.renderer.isOrbiting) {
+                this.vehicleBuilder.updatePreview(this.normalizedMouse.x, this.normalizedMouse.y);
+                // Update block hover for highlighting
+                this.vehicleBuilder.updateBlockHover(this.normalizedMouse.x, this.normalizedMouse.y);
+            }
         }
 
         // Update camera orbit if dragging
         if (this.renderer.isOrbiting) {
             this.renderer.updateOrbit(event.clientX, event.clientY);
+            // Clear hover state when orbiting
+            this.vehicleBuilder.clearHoverState();
         }
     }
 
@@ -170,8 +177,18 @@ export class ControlSystem {
                 // Place block
                 this.vehicleBuilder.placeBlockAtPreview();
             } else if (event.button === 2) { // Right click
-                // Start camera orbit
-                this.renderer.startOrbit(event.clientX, event.clientY);
+                // Check if we're clicking on a block to remove it
+                const hoveredBlock = this.vehicleBuilder.hoveredBlock;
+
+                if (hoveredBlock) {
+                    // Remove the specific block
+                    this.vehicleBuilder.removeBlock(hoveredBlock);
+                    // Clear hover state after removal
+                    this.vehicleBuilder.clearHoverState();
+                } else {
+                    // If not clicking on a block, start camera orbit
+                    this.renderer.startOrbit(event.clientX, event.clientY);
+                }
             }
         }
     }
