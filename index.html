@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Battlers 2.0 - 3D Vehicle Combat</title>
+    <meta name="description" content="Build your vehicle and battle through waves of enemies in this 3D block-building combat game">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui">
+        <div id="topBar">
+            <div id="title">BLOCK BATTLERS</div>
+            <div style="display: flex; flex-direction: column; gap: 15px; align-items: flex-end;">
+                <div id="stats">
+                    <div class="stat">🔩 IRON: <span id="ironCount">50</span></div>
+                    <div class="stat">🔶 COPPER: <span id="copperCount">50</span></div>
+                    <div class="stat">WAVE: <span id="waveNumber">1</span></div>
+                    <div class="stat">BLOCKS: <span id="blockCount">0</span></div>
+                    <div class="stat">ENEMIES: <span id="enemyCount">0</span></div>
+                </div>
+                <button id="modeToggle" style="margin: 0; pointer-events: auto;">START BATTLE</button>
+            </div>
+        </div>
+
+        <div id="buildPanel">
+            <h3>Build Blocks</h3>
+            <div class="block-type active" data-type="armor">🛡️ ARMOR [1]<br><small>3🔩 0🔶</small></div>
+            <div class="block-type" data-type="weapon">⚔️ WEAPON [2]<br><small>2🔩 3🔶</small></div>
+            <div class="block-type" data-type="spike">🔺 SPIKE [3]<br><small>1🔩 0🔶</small></div>
+            <div class="block-type" data-type="engine">⚡ ENGINE [4]<br><small>4🔩 4🔶</small></div>
+            <div class="block-type" data-type="core">💎 CORE [5]<br><small>5🔩 5🔶</small></div>
+            <div class="block-type" data-type="wheel">🎡 WHEEL [6]<br><small>2🔩 1🔶</small></div>
+            <div class="block-type" data-type="largewheel">⭕ LARGE [7]<br><small>3🔩 2🔶</small></div>
+        </div>
+
+        <div id="healthBar" style="display: none;">
+            <div id="healthFill" style="width: 100%"></div>
+        </div>
+
+        <div id="controls">
+            <div class="control-group">
+                <button>Clear All</button>
+                <button>Remove Last</button>
+            </div>
+        </div>
+
+        <div id="instructions">
+            <div><strong>BUILD MODE:</strong></div>
+            <div>• Press 1-7 to select blocks</div>
+            <div>• Move mouse to see ghost preview</div>
+            <div>• Left click to place block</div>
+            <div>• Right click + drag to rotate view</div>
+            <div>• Press R to rotate blocks</div>
+            <div>• Scroll to zoom</div>
+            <div>• Backspace to remove last</div>
+            <div><strong>BATTLE MODE:</strong></div>
+            <div>• W/S to move forward/back</div>
+            <div>• A/D to rotate</div>
+            <div>• Space to shoot</div>
+            <div>• Destroy enemy vehicles!</div>
+            <div><strong>TIPS:</strong></div>
+            <div>• More wheels = faster turning</div>
+            <div>• Spikes deal ramming damage</div>
+            <div>• Protect your core!</div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loadingScreen" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #1a2540 0%, #2a3f5f 50%, #1f2a3d 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        transition: opacity 0.5s;
+    ">
+        <h1 style="
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            color: #00ffcc;
+            text-shadow: 0 0 20px rgba(0, 255, 204, 0.8);
+            margin-bottom: 30px;
+        ">BLOCK BATTLERS</h1>
+        <div style="
+            width: 200px;
+            height: 4px;
+            background: rgba(0, 255, 204, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        ">
+            <div style="
+                width: 0%;
+                height: 100%;
+                background: #00ffcc;
+                animation: loadingBar 2s ease-in-out infinite;
+            "></div>
+        </div>
+        <p style="
+            margin-top: 20px;
+            color: #00ffcc;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.2rem;
+        ">Loading Game...</p>
+    </div>
+
+    <style>
+        @keyframes loadingBar {
+            0% { width: 0%; }
+            50% { width: 100%; }
+            100% { width: 0%; }
+        }
+    </style>
+
+    <script type="module">
+        // Hide loading screen when game is ready
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loadingScreen');
+                if (loadingScreen) {
+                    loadingScreen.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingScreen.remove();
+                    }, 500);
+                }
+            }, 1000);
+        });
+    </script>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>

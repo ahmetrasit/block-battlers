@@ -1,0 +1,277 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Rajdhani:wght@300;600&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Rajdhani', sans-serif;
+    background: linear-gradient(135deg, #1a2540 0%, #2a3f5f 50%, #1f2a3d 100%);
+    color: #00ffcc;
+    overflow: hidden;
+    cursor: crosshair;
+}
+
+#gameCanvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(ellipse at center, #2a3f5f 0%, #1a2540 100%);
+}
+
+#ui {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+#topBar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(180deg, rgba(10, 14, 39, 0.95) 0%, transparent 100%);
+    border-bottom: 2px solid rgba(0, 255, 204, 0.2);
+}
+
+#title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    color: #00ffcc;
+    text-shadow: 0 0 20px rgba(0, 255, 204, 0.8), 0 0 40px rgba(0, 255, 204, 0.4);
+    letter-spacing: 4px;
+}
+
+#stats {
+    display: flex;
+    gap: 30px;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.stat {
+    background: rgba(0, 255, 204, 0.1);
+    padding: 8px 16px;
+    border: 2px solid rgba(0, 255, 204, 0.3);
+    border-radius: 4px;
+    box-shadow: inset 0 0 20px rgba(0, 255, 204, 0.1);
+}
+
+#buildPanel {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(10, 14, 39, 0.95);
+    border: 2px solid rgba(0, 255, 204, 0.3);
+    border-radius: 8px;
+    padding: 20px;
+    min-width: 200px;
+    box-shadow: 0 0 40px rgba(0, 255, 204, 0.2);
+    pointer-events: auto;
+}
+
+#buildPanel h3 {
+    font-family: 'Orbitron', sans-serif;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+    color: #00ffcc;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.block-type {
+    padding: 12px;
+    margin: 8px 0;
+    background: rgba(0, 255, 204, 0.05);
+    border: 2px solid rgba(0, 255, 204, 0.2);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+}
+
+.block-type:hover {
+    background: rgba(0, 255, 204, 0.2);
+    border-color: #00ffcc;
+    transform: translateX(5px);
+    box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+}
+
+.block-type.active {
+    background: rgba(0, 255, 204, 0.3);
+    border-color: #00ffcc;
+    box-shadow: 0 0 25px rgba(0, 255, 204, 0.5);
+}
+
+.block-type small {
+    display: block;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-top: 3px;
+}
+
+#controls {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none;
+}
+
+.control-group {
+    background: rgba(10, 14, 39, 0.95);
+    border: 2px solid rgba(0, 255, 204, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    pointer-events: auto;
+    box-shadow: 0 0 40px rgba(0, 255, 204, 0.2);
+}
+
+button {
+    background: linear-gradient(135deg, rgba(0, 255, 204, 0.2), rgba(0, 255, 204, 0.1));
+    color: #00ffcc;
+    border: 2px solid rgba(0, 255, 204, 0.5);
+    padding: 12px 24px;
+    margin: 5px;
+    cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 4px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+button:hover {
+    background: linear-gradient(135deg, rgba(0, 255, 204, 0.4), rgba(0, 255, 204, 0.2));
+    border-color: #00ffcc;
+    box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+#modeToggle {
+    font-size: 1rem;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, rgba(255, 0, 136, 0.3), rgba(255, 0, 136, 0.1));
+    border-color: rgba(255, 0, 136, 0.5);
+    color: #ff0088;
+}
+
+#modeToggle:hover {
+    background: linear-gradient(135deg, rgba(255, 0, 136, 0.5), rgba(255, 0, 136, 0.3));
+    border-color: #ff0088;
+    box-shadow: 0 0 30px rgba(255, 0, 136, 0.6);
+}
+
+#instructions {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(10, 14, 39, 0.95);
+    border: 2px solid rgba(0, 255, 204, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    font-size: 0.9rem;
+    max-width: 300px;
+    line-height: 1.6;
+}
+
+#instructions div {
+    margin: 5px 0;
+    opacity: 0.8;
+}
+
+.battle-mode #buildPanel,
+.battle-mode #instructions {
+    display: none;
+}
+
+#healthBar {
+    position: absolute;
+    top: 100px;
+    left: 20px;
+    width: 300px;
+    height: 30px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(0, 255, 204, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#healthFill {
+    height: 100%;
+    background: linear-gradient(90deg, #00ffcc, #00ff88);
+    transition: width 0.3s;
+    box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+}
+
+.damage-flash {
+    animation: flash 0.3s;
+}
+
+@keyframes flash {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(2) hue-rotate(45deg); }
+}
+
+/* Additional styles for save/load UI */
+#saveLoadPanel {
+    position: absolute;
+    top: 150px;
+    left: 20px;
+    background: rgba(10, 14, 39, 0.95);
+    border: 2px solid rgba(0, 255, 204, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    pointer-events: auto;
+    display: flex;
+    gap: 10px;
+}
+
+#saveLoadPanel button {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
+
+.save-notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(10, 14, 39, 0.95);
+    border: 2px solid #00ffcc;
+    border-radius: 8px;
+    padding: 20px 30px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #00ffcc;
+    box-shadow: 0 0 40px rgba(0, 255, 204, 0.5);
+    pointer-events: none;
+    animation: fadeInOut 2s ease-in-out;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+}

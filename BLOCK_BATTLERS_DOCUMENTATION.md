@@ -356,7 +356,16 @@ Block Battlers is a 3D block-building vehicle combat game where players construc
 
 ## Version History
 
-### v1.0 (Current)
+### v2.0 (Current) - Phase 1 Migration Complete
+- **Architecture**: Migrated to modular ES6 structure with Vite
+- **Save/Load**: LocalStorage-based persistence with auto-save
+- **Performance**: Object pooling for projectiles and particles
+- **Memory**: Fixed Three.js memory leaks with proper disposal
+- **Build System**: Vite dev server with hot module replacement
+- **Code Quality**: Split 1500-line monolith into 11 specialized modules
+- **Developer Experience**: Modern tooling ready for multiplayer
+
+### v1.0 (November 2025)
 - Initial release with 7 block types
 - Wave-based combat system
 - Block health and destruction
@@ -365,13 +374,81 @@ Block Battlers is a 3D block-building vehicle combat game where players construc
 
 ---
 
+## Technical Architecture
+
+### Project Structure (v2.0)
+```
+/block-battlers
+  /src
+    /game
+      core.js         # Main game loop and coordination
+      vehicle.js      # Vehicle building logic
+      combat.js       # Battle system and collision
+      renderer.js     # Three.js rendering pipeline
+      ui.js           # DOM manipulation and UI updates
+      state.js        # Save/load system and state management
+      blocks.js       # Block definitions and creation
+      enemies.js      # Enemy AI and generation
+      controls.js     # Input handling (keyboard/mouse)
+    /utils
+      pool.js         # Object pooling for performance
+      disposable.js   # Resource management and memory leak prevention
+    /styles
+      main.css        # All game styles
+    main.js           # Entry point
+  index.html          # Main HTML file
+  package.json        # Dependencies and scripts
+  vite.config.js      # Build configuration
+```
+
+### Build & Development
+
+**Development Mode:**
+```bash
+npm run dev          # Start dev server (http://localhost:3001)
+```
+
+**Production Build:**
+```bash
+npm run build        # Build optimized bundle
+npm run preview      # Preview production build
+```
+
+### New Features (v2.0)
+
+1. **Save/Load System**
+   - Auto-save every 60 seconds
+   - Manual save/load buttons
+   - Persists vehicle, materials, wave, and score
+   - Uses localStorage
+
+2. **Memory Management**
+   - Proper disposal of Three.js resources
+   - Object pooling for projectiles
+   - Resource manager for centralized cleanup
+   - Prevents memory leaks
+
+3. **Modular Architecture**
+   - 11 specialized modules
+   - Clear separation of concerns
+   - ES6 modules with imports/exports
+   - Easier to maintain and extend
+
+4. **Performance Optimizations**
+   - Object pooling reduces garbage collection
+   - Batched DOM updates
+   - Optimized raycasting
+   - Hot module replacement (HMR) in dev mode
+
 ## Credits & Technology
 
 **Built With:**
-- Three.js (3D rendering)
-- Vanilla JavaScript
-- HTML5 Canvas
-- CSS3
+- **Three.js 0.160** - 3D rendering engine
+- **Vite 5.0** - Build tool and dev server
+- **Vanilla JavaScript (ES6+)** - Game logic
+- **HTML5 Canvas** - Rendering surface
+- **CSS3** - Styling and UI
+- **LocalStorage API** - Save/load system
 
 **Design Philosophy:**
 - Easy to learn, difficult to master
@@ -381,4 +458,4 @@ Block Battlers is a 3D block-building vehicle combat game where players construc
 
 ---
 
-*Last Updated: November 23, 2025*
+*Last Updated: November 23, 2025 - v2.0 (Phase 1 Migration Complete)*
