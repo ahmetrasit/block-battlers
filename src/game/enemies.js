@@ -308,6 +308,9 @@ export class EnemyManager {
                 return { destroyed: true, wasCore: true, enemyDestroyed: true };
             }
 
+            // Check connectivity - blocks not connected to core fall off
+            this.checkEnemyConnectivity(enemy);
+
             return { destroyed: true, wasCore: false, enemyDestroyed: false };
         }
 
@@ -374,6 +377,130 @@ export class EnemyManager {
             const distance = enemy.group.position.distanceTo(position);
             return distance <= range;
         });
+    }
+
+    /**
+     * Check enemy block connectivity to core and remove disconnected blocks
+     * @param {Object} enemy - Enemy vehicle to check
+     * @returns {Array} Array of removed blocks
+     */
+    checkEnemyConnectivity(enemy) {
+        const coreBlock = enemy.blocks.find(b => b.userData.type === 'core');
+
+        if (!coreBlock || enemy.blocks.length === 0) {
+            // No core or no blocks = enemy destroyed (handled elsewhere)
+            return [];
+        }
+
+        // Flood fill from core to find all connected blocks
+        const connected = new Set();
+        const toCheck = [coreBlock];
+
+        while (toCheck.length > 0) {
+            const block = toCheck.pop();
+            if (connected.has(block)) continue;
+
+            connected.add(block);
+
+            // Check all 6 adjacent positions
+            const neighbors = this.findAdjacentBlocks(block, enemy);
+            toCheck.push(...neighbors.filter(n => !connected.has(n)));
+        }
+
+        // Find disconnected blocks
+        const disconnected = enemy.blocks.filter(b => !connected.has(b));
+
+        // Remove disconnected blocks with falling animation
+        disconnected.forEach(block => {
+            this.removeBlockWithFall(block, enemy);
+        });
+
+        return disconnected;
+    }
+
+    /**
+     * Find all blocks adjacent to the given block in an enemy vehicle
+     * @param {THREE.Mesh} block - Block to check
+     * @param {Object} enemy - Enemy vehicle
+     * @returns {Array} Array of adjacent blocks
+     */
+    findAdjacentBlocks(block, enemy) {
+        const adjacent = [];
+        const pos = block.position;
+
+        // Check all 6 directions (±1 in X, Y, Z)
+        const directions = [
+            {x: 1, y: 0, z: 0}, {x: -1, y: 0, z: 0},
+            {x: 0, y: 1, z: 0}, {x: 0, y: -1, z: 0},
+            {x: 0, y: 0, z: 1}, {x: 0, y: 0, z: -1}
+        ];
+
+        for (const dir of directions) {
+            const checkPos = {
+                x: pos.x + dir.x,
+                y: pos.y + dir.y,
+                z: pos.z + dir.z
+            };
+
+            // Find block at this position
+            const neighborBlock = enemy.blocks.find(b => {
+                const bPos = b.position;
+                return Math.abs(bPos.x - checkPos.x) < 0.1 &&
+                       Math.abs(bPos.y - checkPos.y) < 0.1 &&
+                       Math.abs(bPos.z - checkPos.z) < 0.1;
+            });
+
+            if (neighborBlock) {
+                adjacent.push(neighborBlock);
+            }
+        }
+
+        return adjacent;
+    }
+
+    /**
+     * Remove a block from enemy with falling animation
+     * @param {THREE.Mesh} block - Block to remove
+     * @param {Object} enemy - Enemy vehicle
+     */
+    removeBlockWithFall(block, enemy) {
+        const type = block.userData.type;
+
+        // Remove from arrays immediately
+        const index = enemy.blocks.indexOf(block);
+        if (index > -1) {
+            enemy.blocks.splice(index, 1);
+            enemy.blockCounts[type]--;
+        }
+
+        // Animate falling
+        let fallSpeed = 0;
+        const fallAnimation = () => {
+            if (!block.parent) return; // Already removed
+
+            fallSpeed += 0.01; // Gravity acceleration
+            block.position.y -= fallSpeed;
+            block.rotation.x += 0.05;
+            block.rotation.z += 0.08;
+
+            // Fade out
+            if (block.material && block.material.opacity !== undefined) {
+                block.material.transparent = true;
+                block.material.opacity = Math.max(0, block.material.opacity - 0.02);
+            }
+
+            if (block.position.y > -10 && block.material.opacity > 0) {
+                requestAnimationFrame(fallAnimation);
+            } else {
+                // Remove from scene after falling
+                enemy.group.remove(block);
+                if (block.geometry) block.geometry.dispose();
+                if (block.material) block.material.dispose();
+            }
+        };
+
+        // Start fall animation
+        requestAnimationFrame(fallAnimation);
     }
 
     /**

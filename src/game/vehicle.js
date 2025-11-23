@@ -297,6 +297,11 @@ export class VehicleBuilder {
         this.gameState.vehicle.group.remove(blockToRemove);
         disposeBlock(blockToRemove);
 
+        // Check connectivity - other blocks may fall off if disconnected
+        if (type !== 'core') { // Don't check if core is removed (game over anyway)
+            this.checkConnectivity();
+        }
+
         // Update UI
         document.getElementById('blockCount').textContent = this.gameState.vehicle.blocks.length;
         this.updateMaterialDisplay();
@@ -436,6 +441,9 @@ export class VehicleBuilder {
                 return { destroyed: true, wasCore: true, type };
             }
 
+            // Check connectivity - blocks not connected to core fall off
+            this.checkConnectivity();
+
             return { destroyed: true, wasCore: false, type };
         }
 
@@ -515,6 +523,134 @@ export class VehicleBuilder {
             this.hoveredBlock = null;
         }
         document.body.style.cursor = 'default';
+    }
+
+    /**
+     * Check block connectivity to core and remove disconnected blocks
+     * Uses flood-fill algorithm starting from core
+     * @returns {Array} Array of removed blocks
+     */
+    checkConnectivity() {
+        const coreBlock = this.gameState.vehicle.blocks.find(b => b.userData.type === 'core');
+
+        if (!coreBlock) {
+            // No core = game over (handled elsewhere)
+            return [];
+        }
+
+        // Flood fill from core to find all connected blocks
+        const connected = new Set();
+        const toCheck = [coreBlock];
+
+        while (toCheck.length > 0) {
+            const block = toCheck.pop();
+            if (connected.has(block)) continue;
+
+            connected.add(block);
+
+            // Check all 6 adjacent positions
+            const neighbors = this.findAdjacentBlocks(block);
+            toCheck.push(...neighbors.filter(n => !connected.has(n)));
+        }
+
+        // Find disconnected blocks
+        const disconnected = this.gameState.vehicle.blocks.filter(b => !connected.has(b));
+
+        // Remove disconnected blocks with falling animation
+        disconnected.forEach(block => {
+            this.removeBlockWithFall(block);
+        });
+
+        return disconnected;
+    }
+
+    /**
+     * Find all blocks adjacent to the given block
+     * @param {THREE.Mesh} block - Block to check
+     * @returns {Array} Array of adjacent blocks
+     */
+    findAdjacentBlocks(block) {
+        const adjacent = [];
+        const pos = block.position;
+
+        // Check all 6 directions (±1 in X, Y, Z)
+        const directions = [
+            {x: 1, y: 0, z: 0}, {x: -1, y: 0, z: 0},
+            {x: 0, y: 1, z: 0}, {x: 0, y: -1, z: 0},
+            {x: 0, y: 0, z: 1}, {x: 0, y: 0, z: -1}
+        ];
+
+        for (const dir of directions) {
+            const checkPos = {
+                x: pos.x + dir.x,
+                y: pos.y + dir.y,
+                z: pos.z + dir.z
+            };
+
+            // Find block at this position
+            const neighborBlock = this.gameState.vehicle.blocks.find(b => {
+                const bPos = b.position;
+                return Math.abs(bPos.x - checkPos.x) < 0.1 &&
+                       Math.abs(bPos.y - checkPos.y) < 0.1 &&
+                       Math.abs(bPos.z - checkPos.z) < 0.1;
+            });
+
+            if (neighborBlock) {
+                adjacent.push(neighborBlock);
+            }
+        }
+
+        return adjacent;
+    }
+
+    /**
+     * Remove a block with falling animation
+     * @param {THREE.Mesh} block - Block to remove
+     */
+    removeBlockWithFall(block) {
+        const type = block.userData.type;
+
+        // Refund 50% materials (block is lost, not recovered)
+        const cost = BLOCK_COSTS[type];
+        this.gameState.materials.iron += Math.floor(cost.iron * 0.5);
+        this.gameState.materials.copper += Math.floor(cost.copper * 0.5);
+        this.updateMaterialDisplay();
+
+        // Remove from arrays immediately
+        const index = this.gameState.vehicle.blocks.indexOf(block);
+        if (index > -1) {
+            this.gameState.vehicle.blocks.splice(index, 1);
+            this.gameState.vehicle.blockCounts[type]--;
+            document.getElementById('blockCount').textContent = this.gameState.vehicle.blocks.length;
+        }
+
+        // Animate falling
+        let fallSpeed = 0;
+        const fallAnimation = () => {
+            if (!block.parent) return; // Already removed
+
+            fallSpeed += 0.01; // Gravity acceleration
+            block.position.y -= fallSpeed;
+            block.rotation.x += 0.05;
+            block.rotation.z += 0.08;
+
+            // Fade out
+            if (block.material && block.material.opacity !== undefined) {
+                block.material.transparent = true;
+                block.material.opacity = Math.max(0, block.material.opacity - 0.02);
+            }
+
+            if (block.position.y > -10 && block.material.opacity > 0) {
+                requestAnimationFrame(fallAnimation);
+            } else {
+                // Remove from scene after falling
+                this.gameState.vehicle.group.remove(block);
+                disposeBlock(block);
+            }
+        };
+
+        // Start fall animation
+        requestAnimationFrame(fallAnimation);
     }
 
     /**
