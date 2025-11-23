@@ -386,8 +386,8 @@ export class ControlSystem {
         moveVector.applyQuaternion(this.gameState.vehicle.group.quaternion);
         this.gameState.vehicle.group.position.add(moveVector);
 
-        // Keep vehicle on ground
-        this.gameState.vehicle.group.position.y = 0;
+        // Keep vehicle slightly above ground
+        this.gameState.vehicle.group.position.y = 0.5;
 
         // Shooting
         if (this.isShooting) {

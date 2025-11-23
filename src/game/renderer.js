@@ -276,7 +276,11 @@ export class Renderer {
      */
     setBattleMode(inBattle) {
         // Hide base plate and grid in battle mode
-        if (this.basePlate) this.basePlate.visible = !inBattle;
+        if (this.basePlate) {
+            this.basePlate.visible = !inBattle;
+            // Also remove base plate from physics/raycasting in battle mode
+            this.basePlate.userData.ignoreRaycast = inBattle;
+        }
         if (this.gridHelper) this.gridHelper.visible = !inBattle;
 
         // Update CSS class on body

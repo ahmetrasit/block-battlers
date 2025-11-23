@@ -61,18 +61,25 @@ export class EnemyManager {
         };
 
         // Position enemy based on index and wave
-        const angle = (index / Math.max(1, this.gameState.enemies.length)) * Math.PI * 2;
-        const distance = 20 + (this.gameState.waveNumber * 5); // Farther away in later waves
+        // Fix: Use the correct enemy count calculation instead of current array length
+        const enemyCount = Math.min(4, 1 + Math.floor(this.gameState.waveNumber / 2));
+        const angle = (index / Math.max(1, enemyCount)) * Math.PI * 2;
+        const distance = 15 + (this.gameState.waveNumber * 2); // Closer and less scaling
         enemy.group.position.set(
             Math.sin(angle) * distance,
-            0,
+            0.5, // Slightly above ground
             Math.cos(angle) * distance
         );
 
         // Generate enemy vehicle based on wave
         this.generateEnemyVehicle(enemy);
 
+        // Add enemy group to scene
         this.scene.add(enemy.group);
+
+        // Make sure the enemy is visible
+        enemy.group.visible = true;
+
         return enemy;
     }
 
