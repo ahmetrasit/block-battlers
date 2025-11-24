@@ -140,8 +140,9 @@ export function createBlockGeometry(type) {
             geometry = new THREE.BoxGeometry(1, 0.8, 1);
             break;
         case 'weapon':
-            // Elongated box for weapon
-            geometry = new THREE.BoxGeometry(0.6, 0.6, 1.2);
+            // Tapered barrel - narrow front for clear firing direction
+            geometry = new THREE.ConeGeometry(0.4, 1.2, 6);
+            geometry.rotateX(-Math.PI / 2); // Point forward (negative Z)
             break;
         case 'engine':
             // Octagonal prism for engine
@@ -185,9 +186,9 @@ export function createBlockGeometry(type) {
             geometry = new THREE.BoxGeometry(1, 1.2, 1);
             break;
         case 'laser':
-            // Elongated octagonal laser barrel
-            geometry = new THREE.CylinderGeometry(0.3, 0.3, 1.4, 8);
-            geometry.rotateX(Math.PI / 2);
+            // Tapered laser emitter - narrow front for clear firing direction
+            geometry = new THREE.CylinderGeometry(0.15, 0.4, 1.4, 8);
+            geometry.rotateX(-Math.PI / 2); // Narrow end points forward (negative Z)
             break;
         default:
             geometry = new THREE.BoxGeometry(1, 1, 1);
