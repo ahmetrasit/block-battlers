@@ -18,17 +18,17 @@ export class EnemyManager {
     }
 
     /**
-     * Create enemies for current wave
+     * Create enemies for current wave with different types
      */
     createEnemies() {
         // Clear existing enemies
         this.clearEnemies();
 
-        // Determine enemy count based on wave
-        const enemyCount = Math.min(4, 1 + Math.floor(this.gameState.waveNumber / 2));
+        const wave = this.gameState.waveNumber;
+        const enemyTypes = this.determineEnemyComposition(wave);
 
-        for (let i = 0; i < enemyCount; i++) {
-            const enemy = this.createEnemy(i);
+        for (let i = 0; i < enemyTypes.length; i++) {
+            const enemy = this.createEnemy(i, enemyTypes.length, enemyTypes[i]);
             this.enemies.push(enemy);
             this.gameState.enemies.push(enemy);
         }
@@ -36,16 +36,56 @@ export class EnemyManager {
         // Update enemy count display
         const enemyCountElement = document.getElementById('enemyCount');
         if (enemyCountElement) {
-            enemyCountElement.textContent = enemyCount;
+            enemyCountElement.textContent = enemyTypes.length;
         }
+    }
+
+    /**
+     * Determine enemy composition for the wave
+     * @param {number} wave - Current wave number
+     * @returns {Array<string>} Array of enemy types
+     */
+    determineEnemyComposition(wave) {
+        const composition = [];
+
+        if (wave === 1) {
+            // Wave 1: Single regular enemy
+            composition.push('regular');
+        } else if (wave === 2) {
+            // Wave 2: Two regulars
+            composition.push('regular', 'regular');
+        } else if (wave === 3) {
+            // Wave 3: Introduce swarmers
+            composition.push('swarmer', 'swarmer', 'regular');
+        } else if (wave === 4) {
+            // Wave 4: Introduce tank
+            composition.push('swarmer', 'regular', 'tank');
+        } else if (wave === 5) {
+            // Wave 5: More variety
+            composition.push('swarmer', 'swarmer', 'regular', 'tank');
+        } else if (wave >= 6 && wave < 10) {
+            // Wave 6-9: Add snipers
+            composition.push('swarmer', 'swarmer', 'regular', 'sniper', 'tank');
+        } else {
+            // Wave 10+: Full compositions with support
+            const swarmCount = 2 + Math.floor((wave - 10) / 3);
+            for (let i = 0; i < Math.min(swarmCount, 4); i++) {
+                composition.push('swarmer');
+            }
+            composition.push('regular', 'sniper', 'tank', 'support');
+        }
+
+        return composition;
     }
 
     /**
      * Create a single enemy vehicle
      * @param {number} index - Enemy index for positioning
+     * @param {number} totalCount - Total number of enemies in wave
+     * @param {string} type - Enemy type (swarmer, regular, tank, sniper, support)
      * @returns {Object} Enemy object
      */
-    createEnemy(index) {
+    createEnemy(index, totalCount, type = 'regular') {
         const enemy = {
             blocks: [],
             group: new THREE.Group(),
@@ -54,6 +94,7 @@ export class EnemyManager {
             health: 100,
             maxHealth: 100,
             lastAttackTime: 0,
+            type: type,
             blockCounts: {
                 armor: 0, weapon: 0, engine: 0,
                 core: 0, wheel: 0, spike: 0, largewheel: 0,
@@ -61,35 +102,80 @@ export class EnemyManager {
             }
         };
 
-        // Position enemy based on index and wave
-        // Fix: Use the correct enemy count calculation instead of current array length
-        const enemyCount = Math.min(4, 1 + Math.floor(this.gameState.waveNumber / 2));
-        const angle = (index / Math.max(1, enemyCount)) * Math.PI * 2;
-        const distance = 15 + (this.gameState.waveNumber * 2); // Closer and less scaling
+        // Position enemy based on index
+        const angle = (index / Math.max(1, totalCount)) * Math.PI * 2;
+        const distance = 15 + (this.gameState.waveNumber * 2);
         enemy.group.position.set(
             Math.sin(angle) * distance,
-            0.5, // Slightly above ground
+            0.5,
             Math.cos(angle) * distance
         );
 
-        // Generate enemy vehicle based on wave
-        this.generateEnemyVehicle(enemy);
+        // Generate enemy vehicle based on type
+        switch(type) {
+            case 'swarmer':
+                this.generateSwarmer(enemy);
+                break;
+            case 'tank':
+                this.generateTank(enemy);
+                break;
+            case 'sniper':
+                this.generateSniper(enemy);
+                break;
+            case 'support':
+                this.generateSupport(enemy);
+                break;
+            case 'regular':
+            default:
+                this.generateRegular(enemy);
+                break;
+        }
 
         // Add enemy group to scene
         this.scene.add(enemy.group);
-
-        // Make sure the enemy is visible
         enemy.group.visible = true;
 
         return enemy;
     }
 
     /**
-     * Generate enemy vehicle blocks based on wave difficulty
-     * Uses structured placement for realistic vehicle design
+     * Generate swarmer enemy - small, fast, weak
      * @param {Object} enemy - Enemy object to populate
      */
-    generateEnemyVehicle(enemy) {
+    generateSwarmer(enemy) {
+        const wave = this.gameState.waveNumber;
+
+        // Core in center
+        this.addEnemyBlock(enemy, 'core', 0, 0.5, 0);
+
+        // Single engine
+        this.addEnemyBlock(enemy, 'engine', 0, 0.5, 1);
+
+        // Two wheels for speed
+        this.addEnemyBlock(enemy, 'wheel', -1, 0.5, 0);
+        this.addEnemyBlock(enemy, 'wheel', 1, 0.5, 0);
+
+        // One spike in front
+        this.addEnemyBlock(enemy, 'spike', 0, 0.5, -1);
+
+        // One weapon
+        this.addEnemyBlock(enemy, 'weapon', 0, 1.5, 0);
+
+        // Minimal armor
+        if (wave > 5) {
+            this.addEnemyBlock(enemy, 'armor', 0, 0.5, 2);
+        }
+
+        // Calculate total health
+        enemy.maxHealth = enemy.blocks.reduce((sum, block) => sum + block.userData.maxHealth, 0);
+        enemy.health = enemy.maxHealth;
+    }
+
+    /**
+     * Generate regular enemy - balanced
+     * @param {Object} enemy - Enemy object to populate
+     */
+    generateRegular(enemy) {
         const wave = this.gameState.waveNumber;
 
         // Core in center (always has one)
@@ -165,6 +251,136 @@ export class EnemyManager {
             const pos = armorPositions[i];
             this.addEnemyBlock(enemy, 'armor', pos.x, pos.y, pos.z);
         }
+
+        // Calculate total health
+        enemy.maxHealth = enemy.blocks.reduce((sum, block) => sum + block.userData.maxHealth, 0);
+        enemy.health = enemy.maxHealth;
+    }
+
+    /**
+     * Generate tank enemy - heavy armor, slow
+     * @param {Object} enemy - Enemy object to populate
+     */
+    generateTank(enemy) {
+        const wave = this.gameState.waveNumber;
+
+        // Core in center
+        this.addEnemyBlock(enemy, 'core', 0, 0.5, 0);
+
+        // Multiple engines for power
+        this.addEnemyBlock(enemy, 'engine', 0, 0.5, 1);
+        this.addEnemyBlock(enemy, 'engine', 0, 0.5, 2);
+
+        // Heavy armor wheels
+        this.addEnemyBlock(enemy, 'largewheel', -1, 0.5, 0);
+        this.addEnemyBlock(enemy, 'largewheel', 1, 0.5, 0);
+        this.addEnemyBlock(enemy, 'largewheel', -1, 0.5, 1);
+        this.addEnemyBlock(enemy, 'largewheel', 1, 0.5, 1);
+
+        // Heavy armor all around
+        this.addEnemyBlock(enemy, 'heavyarmor', 0, 1.5, 0);   // Top
+        this.addEnemyBlock(enemy, 'heavyarmor', -1, 0.5, 2);  // Back left
+        this.addEnemyBlock(enemy, 'heavyarmor', 1, 0.5, 2);   // Back right
+        this.addEnemyBlock(enemy, 'heavyarmor', -2, 0.5, 0);  // Far left
+        this.addEnemyBlock(enemy, 'heavyarmor', 2, 0.5, 0);   // Far right
+
+        // Multiple spikes in front
+        this.addEnemyBlock(enemy, 'spike', 0, 0.5, -1);
+        this.addEnemyBlock(enemy, 'spike', -1, 0.5, -1);
+        this.addEnemyBlock(enemy, 'spike', 1, 0.5, -1);
+
+        // Weapons
+        this.addEnemyBlock(enemy, 'weapon', 0, 1.5, -1);
+        this.addEnemyBlock(enemy, 'weapon', -1, 1.5, 0);
+        this.addEnemyBlock(enemy, 'weapon', 1, 1.5, 0);
+
+        // Shields in late game
+        if (wave >= 8) {
+            this.addEnemyBlock(enemy, 'shield', 0, 0.5, 2);
+            this.addEnemyBlock(enemy, 'shield', 0, 2.5, 0);
+        }
+
+        // Calculate total health
+        enemy.maxHealth = enemy.blocks.reduce((sum, block) => sum + block.userData.maxHealth, 0);
+        enemy.health = enemy.maxHealth;
+    }
+
+    /**
+     * Generate sniper enemy - lots of weapons, medium armor
+     * @param {Object} enemy - Enemy object to populate
+     */
+    generateSniper(enemy) {
+        const wave = this.gameState.waveNumber;
+
+        // Core in center
+        this.addEnemyBlock(enemy, 'core', 0, 0.5, 0);
+
+        // Engine
+        this.addEnemyBlock(enemy, 'engine', 0, 0.5, 1);
+
+        // Wheels
+        this.addEnemyBlock(enemy, 'wheel', -1, 0.5, 0);
+        this.addEnemyBlock(enemy, 'wheel', 1, 0.5, 0);
+        this.addEnemyBlock(enemy, 'wheel', -1, 0.5, 1);
+        this.addEnemyBlock(enemy, 'wheel', 1, 0.5, 1);
+
+        // Many weapons and lasers
+        this.addEnemyBlock(enemy, 'laser', 0, 1.5, 0);
+        this.addEnemyBlock(enemy, 'laser', -1, 1.5, 0);
+        this.addEnemyBlock(enemy, 'laser', 1, 1.5, 0);
+        this.addEnemyBlock(enemy, 'weapon', 0, 1.5, -1);
+        this.addEnemyBlock(enemy, 'weapon', 0, 1.5, 1);
+
+        // Medium armor
+        this.addEnemyBlock(enemy, 'armor', 0, 0.5, 2);
+        this.addEnemyBlock(enemy, 'armor', -1, 0.5, 2);
+        this.addEnemyBlock(enemy, 'armor', 1, 0.5, 2);
+        this.addEnemyBlock(enemy, 'armor', 0, 0.5, -1);
+
+        // Calculate total health
+        enemy.maxHealth = enemy.blocks.reduce((sum, block) => sum + block.userData.maxHealth, 0);
+        enemy.health = enemy.maxHealth;
+    }
+
+    /**
+     * Generate support enemy - repair and shields
+     * @param {Object} enemy - Enemy object to populate
+     */
+    generateSupport(enemy) {
+        const wave = this.gameState.waveNumber;
+
+        // Core in center
+        this.addEnemyBlock(enemy, 'core', 0, 0.5, 0);
+
+        // Engine
+        this.addEnemyBlock(enemy, 'engine', 0, 0.5, 1);
+        this.addEnemyBlock(enemy, 'engine', 0, 0.5, 2);
+
+        // Wheels
+        this.addEnemyBlock(enemy, 'largewheel', -1, 0.5, 0);
+        this.addEnemyBlock(enemy, 'largewheel', 1, 0.5, 0);
+        this.addEnemyBlock(enemy, 'largewheel', -1, 0.5, 1);
+        this.addEnemyBlock(enemy, 'largewheel', 1, 0.5, 1);
+
+        // Multiple shields
+        this.addEnemyBlock(enemy, 'shield', 0, 1.5, 0);
+        this.addEnemyBlock(enemy, 'shield', -1, 1.5, 0);
+        this.addEnemyBlock(enemy, 'shield', 1, 1.5, 0);
+        this.addEnemyBlock(enemy, 'shield', 0, 0.5, -1);
+
+        // Multiple repairs
+        this.addEnemyBlock(enemy, 'repair', 0, 0.5, 2);
+        this.addEnemyBlock(enemy, 'repair', -1, 0.5, 2);
+        this.addEnemyBlock(enemy, 'repair', 1, 0.5, 2);
+
+        // Some armor
+        this.addEnemyBlock(enemy, 'armor', -2, 0.5, 0);
+        this.addEnemyBlock(enemy, 'armor', 2, 0.5, 0);
+        this.addEnemyBlock(enemy, 'armor', 0, 2.5, 0);
+
+        // Weapons for defense
+        this.addEnemyBlock(enemy, 'weapon', 0, 1.5, -1);
+        this.addEnemyBlock(enemy, 'weapon', 0, 1.5, 1);
 
         // Calculate total health
         enemy.maxHealth = enemy.blocks.reduce((sum, block) => sum + block.userData.maxHealth, 0);
