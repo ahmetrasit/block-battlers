@@ -26,14 +26,10 @@
         </div>
 
         <div id="buildPanel">
-            <h3>Build Blocks</h3>
-            <div class="block-type active" data-type="armor">🛡️ ARMOR [1]<br><small>3🔩 0🔶</small></div>
-            <div class="block-type" data-type="weapon">⚔️ WEAPON [2]<br><small>2🔩 3🔶</small></div>
-            <div class="block-type" data-type="spike">🔺 SPIKE [3]<br><small>1🔩 0🔶</small></div>
-            <div class="block-type" data-type="engine">⚡ ENGINE [4]<br><small>4🔩 4🔶</small></div>
-            <div class="block-type" data-type="core">💎 CORE [5]<br><small>5🔩 5🔶</small></div>
-            <div class="block-type" data-type="wheel">🎡 WHEEL [6]<br><small>2🔩 1🔶</small></div>
-            <div class="block-type" data-type="largewheel">⭕ LARGE [7]<br><small>3🔩 2🔶</small></div>
+            <h3 style="margin: 5px 0; font-size: 13px; text-align: center; color: #00ffff;">⬅️ SCROLL BLOCKS ➡️</h3>
+            <div id="blockToolbar" class="block-toolbar">
+                <!-- Blocks will be dynamically added here -->
+            </div>
         </div>
 
         <div id="healthBar" style="display: none;">
@@ -50,23 +46,22 @@
 
         <div id="instructions">
             <div><strong>BUILD MODE:</strong></div>
-            <div>• Press 1-7 to select blocks</div>
+            <div>• Scroll toolbar on left to see 12 block types!</div>
+            <div>• Press 1-9 for quick block selection</div>
+            <div>• Click blocks in toolbar to select</div>
             <div>• Move mouse to see ghost preview</div>
             <div>• Left click to place block</div>
             <div>• Right click on block to remove it</div>
-            <div>• Right click + drag empty space to rotate view</div>
             <div>• Press R to rotate blocks</div>
-            <div>• Scroll to zoom</div>
-            <div>• <strong>Press 0 twice quickly to START BATTLE</strong></div>
+            <div>• <strong>Press 0 twice to START BATTLE</strong></div>
             <div><strong>BATTLE MODE:</strong></div>
-            <div>• W/S to move forward/back</div>
-            <div>• A/D to rotate</div>
+            <div>• W/S to move, A/D to rotate</div>
             <div>• Space to shoot</div>
-            <div>• Destroy enemy vehicles!</div>
+            <div>• Destroy all enemies to win!</div>
             <div><strong>TIPS:</strong></div>
-            <div>• More wheels = faster turning</div>
-            <div>• Spikes deal ramming damage</div>
-            <div>• Protect your core!</div>
+            <div>• Blocks fall off if disconnected from core!</div>
+            <div>• Try new blocks: Shield, Laser, Heavy Armor!</div>
+            <div>• Build strategically for chain reactions!</div>
         </div>
     </div>
 

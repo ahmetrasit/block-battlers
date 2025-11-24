@@ -65,10 +65,13 @@ export class ControlSystem {
 
         // Number keys for block selection (build mode)
         if (this.gameState.mode === 'build') {
-            const blockTypes = ['armor', 'weapon', 'spike', 'engine', 'core', 'wheel', 'largewheel'];
+            const blockTypes = [
+                'armor', 'weapon', 'spike', 'engine', 'core', 'wheel', 'largewheel',
+                'shield', 'booster' // Keys 1-9 for first 9 blocks
+            ];
             const keyNum = parseInt(event.key);
 
-            if (keyNum >= 1 && keyNum <= 7) {
+            if (keyNum >= 1 && keyNum <= 9 && keyNum <= blockTypes.length) {
                 this.selectBlockType(blockTypes[keyNum - 1]);
             }
 
@@ -270,16 +273,46 @@ export class ControlSystem {
     }
 
     /**
-     * Setup block selection button listeners
+     * Setup block selection button listeners and populate toolbar
      */
-    setupBlockSelectionButtons() {
-        document.querySelectorAll('.block-type').forEach(button => {
-            button.addEventListener('click', () => {
-                const type = button.dataset.type;
-                if (type) {
-                    this.selectBlockType(type);
-                }
+    async setupBlockSelectionButtons() {
+        // Import block data
+        const {BLOCK_COSTS, BLOCK_NAMES, BLOCK_DESCRIPTIONS, BLOCK_ICONS} = await import('./blocks.js');
+
+        const toolbar = document.getElementById('blockToolbar');
+        if (!toolbar) return;
+
+        // All block types in order
+        const blockTypes = [
+            'armor', 'weapon', 'spike', 'engine', 'core', 'wheel', 'largewheel',
+            'shield', 'booster', 'repair', 'heavyarmor', 'laser'
+        ];
+
+        // Create block cards
+        blockTypes.forEach((type, index) => {
+            const card = document.createElement('div');
+            card.className = 'block-type';
+            if (index === 0) card.classList.add('active'); // First one active by default
+            card.dataset.type = type;
+
+            const cost = BLOCK_COSTS[type];
+            const keyNum = index < 9 ? `[${index + 1}]` : '';
+
+            card.innerHTML = `
+                <div class="block-type-header">
+                    <span class="block-type-icon">${BLOCK_ICONS[type]}</span>
+                    <span class="block-type-name">${BLOCK_NAMES[type]}</span>
+                    <span class="block-type-key">${keyNum}</span>
+                </div>
+                <div class="block-type-desc">${BLOCK_DESCRIPTIONS[type]}</div>
+                <div class="block-type-cost">🔩${cost.iron} 🔶${cost.copper}</div>
+            `;
+
+            card.addEventListener('click', () => {
+                this.selectBlockType(type);
             });
+
+            toolbar.appendChild(card);
         });
     }
 

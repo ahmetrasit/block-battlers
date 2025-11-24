@@ -75,36 +75,105 @@ body {
     background: rgba(10, 14, 39, 0.95);
     border: 2px solid rgba(0, 255, 204, 0.3);
     border-radius: 8px;
-    padding: 20px;
-    min-width: 200px;
+    padding: 15px;
+    max-width: 250px;
     box-shadow: 0 0 40px rgba(0, 255, 204, 0.2);
     pointer-events: auto;
 }
 
 #buildPanel h3 {
     font-family: 'Orbitron', sans-serif;
-    margin-bottom: 15px;
-    font-size: 1.3rem;
+    margin-bottom: 10px;
+    font-size: 1rem;
     color: #00ffcc;
     text-transform: uppercase;
     letter-spacing: 2px;
 }
 
+/* Scrollable block toolbar */
+.block-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 5px;
+}
+
+/* Custom scrollbar */
+.block-toolbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.block-toolbar::-webkit-scrollbar-track {
+    background: rgba(0, 255, 204, 0.05);
+    border-radius: 4px;
+}
+
+.block-toolbar::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 204, 0.3);
+    border-radius: 4px;
+}
+
+.block-toolbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 204, 0.5);
+}
+
 .block-type {
-    padding: 12px;
-    margin: 8px 0;
+    padding: 10px;
     background: rgba(0, 255, 204, 0.05);
     border: 2px solid rgba(0, 255, 204, 0.2);
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s;
     font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 60px;
+}
+
+.block-type-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    margin-bottom: 3px;
+}
+
+.block-type-icon {
+    font-size: 1.3rem;
+}
+
+.block-type-name {
+    flex: 1;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+
+.block-type-key {
+    font-size: 0.7rem;
+    opacity: 0.5;
+}
+
+.block-type-desc {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    margin: 2px 0;
+}
+
+.block-type-cost {
+    font-size: 0.75rem;
+    opacity: 0.7;
 }
 
 .block-type:hover {
     background: rgba(0, 255, 204, 0.2);
     border-color: #00ffcc;
-    transform: translateX(5px);
+    transform: scale(1.02);
     box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
 }
 
