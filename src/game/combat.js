@@ -148,14 +148,48 @@ export class CombatSystem {
             const projectilePos = projectile.position;
 
             if (owner === 'player') {
-                // Check collision with enemies
+                // Check collision with enemy blocks
                 this.gameState.enemies.forEach(enemy => {
                     if (enemy.blocks.length === 0) return;
 
-                    const distance = enemy.group.position.distanceTo(projectilePos);
-                    if (distance < 3) { // Hit radius
-                        // Damage enemy
-                        const result = this.enemyManager.damageEnemy(enemy, projectile.userData.damage);
+                    // Check each enemy block for hit
+                    for (let block of enemy.blocks) {
+                        const blockWorldPos = new THREE.Vector3();
+                        block.getWorldPosition(blockWorldPos);
+                        blockWorldPos.add(enemy.group.position);
+
+                        const distance = blockWorldPos.distanceTo(projectilePos);
+                        if (distance < 0.8) { // Tight hit radius per block
+                            // Damage enemy
+                            const result = this.enemyManager.damageEnemy(enemy, projectile.userData.damage);
+
+                            // Create impact effect
+                            this.createImpactEffect(projectilePos);
+
+                            // Release projectile
+                            this.projectilePool.release(projectile);
+
+                            // Check if enemy was destroyed
+                            if (result.enemyDestroyed) {
+                                this.onEnemyDestroyed(enemy);
+                            }
+                            return; // Exit loop after hit
+                        }
+                    }
+                });
+            } else if (owner === 'enemy') {
+                // Check collision with player blocks
+                if (this.gameState.vehicle.blocks.length === 0) return;
+
+                // Check each player block for hit
+                for (let block of this.gameState.vehicle.blocks) {
+                    const blockWorldPos = new THREE.Vector3();
+                    block.getWorldPosition(blockWorldPos);
+
+                    const distance = blockWorldPos.distanceTo(projectilePos);
+                    if (distance < 0.8) { // Tight hit radius per block
+                        // Damage player
+                        const result = this.vehicleBuilder.damageRandomBlock(projectile.userData.damage);
 
                         // Create impact effect
                         this.createImpactEffect(projectilePos);
@@ -163,34 +197,15 @@ export class CombatSystem {
                         // Release projectile
                         this.projectilePool.release(projectile);
 
-                        // Check if enemy was destroyed
-                        if (result.enemyDestroyed) {
-                            this.onEnemyDestroyed(enemy);
+                        // Check if core was destroyed
+                        if (result && result.wasCore) {
+                            this.onPlayerCoreDestroyed();
                         }
+
+                        // Update health bar
+                        this.updateHealthBar();
+                        return; // Exit loop after hit
                     }
-                });
-            } else if (owner === 'enemy') {
-                // Check collision with player
-                const playerPos = this.gameState.vehicle.group.position;
-                const distance = playerPos.distanceTo(projectilePos);
-
-                if (distance < 3) { // Hit radius
-                    // Damage player
-                    const result = this.vehicleBuilder.damageRandomBlock(projectile.userData.damage);
-
-                    // Create impact effect
-                    this.createImpactEffect(projectilePos);
-
-                    // Release projectile
-                    this.projectilePool.release(projectile);
-
-                    // Check if core was destroyed
-                    if (result && result.wasCore) {
-                        this.onPlayerCoreDestroyed();
-                    }
-
-                    // Update health bar
-                    this.updateHealthBar();
                 }
             }
         });
@@ -202,16 +217,36 @@ export class CombatSystem {
     checkVehicleCollisions() {
         if (this.gameState.mode !== 'battle') return;
 
-        const playerPos = this.gameState.vehicle.group.position;
         const currentTime = Date.now();
 
         this.gameState.enemies.forEach(enemy => {
             if (enemy.blocks.length === 0) return;
 
-            const enemyPos = enemy.group.position;
-            const distance = playerPos.distanceTo(enemyPos);
+            // Check for collision between any player block and any enemy block
+            let collision = false;
+            for (let playerBlock of this.gameState.vehicle.blocks) {
+                const playerBlockPos = new THREE.Vector3();
+                playerBlock.getWorldPosition(playerBlockPos);
 
-            if (distance < 4) { // Collision radius
+                for (let enemyBlock of enemy.blocks) {
+                    const enemyBlockPos = new THREE.Vector3();
+                    enemyBlock.getWorldPosition(enemyBlockPos);
+                    enemyBlockPos.add(enemy.group.position);
+
+                    const distance = playerBlockPos.distanceTo(enemyBlockPos);
+                    if (distance < 1.2) { // Collision radius per block pair
+                        collision = true;
+                        break;
+                    }
+                }
+                if (collision) break;
+            }
+
+            if (collision) { // Blocks are colliding
+                // Get vehicle positions for effects and pushing
+                const playerPos = this.gameState.vehicle.group.position;
+                const enemyPos = enemy.group.position;
+
                 // Check for spike damage
                 const playerSpikes = this.gameState.vehicle.blockCounts.spike;
                 const enemySpikes = enemy.blockCounts.spike;
