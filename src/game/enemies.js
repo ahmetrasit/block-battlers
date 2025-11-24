@@ -56,7 +56,8 @@ export class EnemyManager {
             lastAttackTime: 0,
             blockCounts: {
                 armor: 0, weapon: 0, engine: 0,
-                core: 0, wheel: 0, spike: 0, largewheel: 0
+                core: 0, wheel: 0, spike: 0, largewheel: 0,
+                laser: 0, shield: 0, booster: 0, repair: 0, heavyarmor: 0
             }
         };
 
@@ -85,51 +86,84 @@ export class EnemyManager {
 
     /**
      * Generate enemy vehicle blocks based on wave difficulty
+     * Uses structured placement for realistic vehicle design
      * @param {Object} enemy - Enemy object to populate
      */
     generateEnemyVehicle(enemy) {
         const wave = this.gameState.waveNumber;
 
-        // Core (always has one)
+        // Core in center (always has one)
         this.addEnemyBlock(enemy, 'core', 0, 0.5, 0);
 
-        // Engine (more in higher waves)
+        // Engine behind core
         const engineCount = 1 + Math.floor(wave / 3);
         for (let i = 0; i < engineCount; i++) {
-            const pos = this.getRandomAdjacentPosition(enemy);
-            if (pos) this.addEnemyBlock(enemy, 'engine', pos.x, pos.y, pos.z);
+            this.addEnemyBlock(enemy, 'engine', 0, 0.5, 1 + i);
         }
 
-        // Wheels (more in higher waves)
-        const wheelCount = 2 + Math.floor(wave / 2);
+        // Wheels on sides next to engine/core
+        const wheelCount = Math.min(4, 2 + Math.floor(wave / 2));
+        const wheelPositions = [
+            { x: -1, y: 0.5, z: 0 },  // Left side, core level
+            { x: 1, y: 0.5, z: 0 },   // Right side, core level
+            { x: -1, y: 0.5, z: 1 },  // Left side, engine level
+            { x: 1, y: 0.5, z: 1 }    // Right side, engine level
+        ];
         for (let i = 0; i < wheelCount; i++) {
-            const uselargewheel = wave > 4 && Math.random() > 0.5;
+            const uselargewheel = wave > 4 && i < 2; // First 2 wheels can be large
             const type = uselargewheel ? 'largewheel' : 'wheel';
-            const pos = this.getRandomAdjacentPosition(enemy);
-            if (pos) this.addEnemyBlock(enemy, type, pos.x, pos.y, pos.z);
+            const pos = wheelPositions[i];
+            this.addEnemyBlock(enemy, type, pos.x, pos.y, pos.z);
         }
 
-        // Weapons (more in higher waves)
-        const weaponCount = 1 + Math.floor(wave / 2);
-        for (let i = 0; i < weaponCount; i++) {
-            const pos = this.getRandomAdjacentPosition(enemy);
-            if (pos) this.addEnemyBlock(enemy, 'weapon', pos.x, pos.y, pos.z);
-        }
-
-        // Armor (scales with wave)
-        const armorCount = Math.floor(wave * 1.5);
-        for (let i = 0; i < armorCount; i++) {
-            const pos = this.getRandomAdjacentPosition(enemy);
-            if (pos) this.addEnemyBlock(enemy, 'armor', pos.x, pos.y, pos.z);
-        }
-
-        // Spikes (wave 3+)
-        if (wave >= 3) {
-            const spikeCount = Math.floor((wave - 2) / 2);
+        // Spikes in front at bottom
+        if (wave >= 2) {
+            const spikeCount = Math.min(3, 1 + Math.floor((wave - 1) / 2));
+            const spikePositions = [
+                { x: 0, y: 0.5, z: -1 },   // Center front
+                { x: -1, y: 0.5, z: -1 },  // Left front
+                { x: 1, y: 0.5, z: -1 }    // Right front
+            ];
             for (let i = 0; i < spikeCount; i++) {
-                const pos = this.getRandomAdjacentPosition(enemy);
-                if (pos) this.addEnemyBlock(enemy, 'spike', pos.x, pos.y, pos.z);
+                const pos = spikePositions[i];
+                this.addEnemyBlock(enemy, 'spike', pos.x, pos.y, pos.z);
             }
+        }
+
+        // Weapons on top and sides
+        const weaponCount = 1 + Math.floor(wave / 2);
+        const weaponPositions = [
+            { x: 0, y: 1.5, z: 0 },    // Top center
+            { x: -1, y: 1.5, z: 0 },   // Top left
+            { x: 1, y: 1.5, z: 0 },    // Top right
+            { x: 0, y: 1.5, z: -1 },   // Top front
+            { x: 0, y: 1.5, z: 1 }     // Top back
+        ];
+        for (let i = 0; i < Math.min(weaponCount, weaponPositions.length); i++) {
+            // Mix of weapons and lasers in higher waves
+            const useLaser = wave > 5 && Math.random() > 0.6;
+            const type = useLaser ? 'laser' : 'weapon';
+            const pos = weaponPositions[i];
+            this.addEnemyBlock(enemy, type, pos.x, pos.y, pos.z);
+        }
+
+        // Armor around the structure
+        const armorCount = Math.floor(wave * 1.5);
+        const armorPositions = [
+            { x: 0, y: 0.5, z: 2 },    // Back
+            { x: -1, y: 0.5, z: 2 },   // Back left
+            { x: 1, y: 0.5, z: 2 },    // Back right
+            { x: -2, y: 0.5, z: 0 },   // Far left
+            { x: 2, y: 0.5, z: 0 },    // Far right
+            { x: 0, y: 1.5, z: 1 },    // Top back
+            { x: -1, y: 1.5, z: 1 },   // Top back left
+            { x: 1, y: 1.5, z: 1 },    // Top back right
+            { x: 0, y: -0.5, z: 0 },   // Bottom center
+            { x: 0, y: -0.5, z: 1 }    // Bottom back
+        ];
+        for (let i = 0; i < Math.min(armorCount, armorPositions.length); i++) {
+            const pos = armorPositions[i];
+            this.addEnemyBlock(enemy, 'armor', pos.x, pos.y, pos.z);
         }
 
         // Calculate total health
