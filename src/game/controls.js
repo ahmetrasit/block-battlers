@@ -177,13 +177,22 @@ export class ControlSystem {
         this.normalizedMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         this.normalizedMouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
+        // Check if mouse is over UI elements
+        const isOverUI = this.isMouseOverUI(event);
+
         // Build mode updates
         if (this.gameState.mode === 'build') {
-            // Update preview block when not orbiting
-            if (!this.renderer.isOrbiting) {
+            // Update preview block when not orbiting and NOT over UI
+            if (!this.renderer.isOrbiting && !isOverUI) {
                 this.vehicleBuilder.updatePreview(this.normalizedMouse.x, this.normalizedMouse.y);
                 // Update block hover for highlighting
                 this.vehicleBuilder.updateBlockHover(this.normalizedMouse.x, this.normalizedMouse.y);
+            } else if (isOverUI) {
+                // Hide preview and clear hover when over UI
+                if (this.vehicleBuilder.previewBlock) {
+                    this.vehicleBuilder.previewBlock.visible = false;
+                }
+                this.vehicleBuilder.clearHoverState();
             }
         }
 
@@ -196,25 +205,45 @@ export class ControlSystem {
     }
 
     /**
+     * Check if mouse is over UI elements
+     * @param {MouseEvent} event
+     * @returns {boolean}
+     */
+    isMouseOverUI(event) {
+        const element = event.target;
+        // Check if the target or any parent is a UI element
+        if (element.id === 'gameCanvas') {
+            return false; // Over canvas is OK
+        }
+        // If target is not canvas, it's over UI
+        return element.id !== 'gameCanvas';
+    }
+
+    /**
      * Handle mouse down events
      * @param {MouseEvent} event
      */
     onMouseDown(event) {
+        // Don't place blocks if clicking on UI elements
+        const isOverUI = this.isMouseOverUI(event);
+
         if (this.gameState.mode === 'build') {
             if (event.button === 0) { // Left click
-                // Place block
-                this.vehicleBuilder.placeBlockAtPreview();
+                // Only place block if NOT over UI
+                if (!isOverUI) {
+                    this.vehicleBuilder.placeBlockAtPreview();
+                }
             } else if (event.button === 2) { // Right click
                 // Check if we're clicking on a block to remove it
                 const hoveredBlock = this.vehicleBuilder.hoveredBlock;
 
-                if (hoveredBlock) {
+                if (hoveredBlock && !isOverUI) {
                     // Remove the specific block
                     this.vehicleBuilder.removeBlock(hoveredBlock);
                     // Clear hover state after removal
                     this.vehicleBuilder.clearHoverState();
-                } else {
-                    // If not clicking on a block, start camera orbit
+                } else if (!isOverUI) {
+                    // If not clicking on a block and not over UI, start camera orbit
                     this.renderer.startOrbit(event.clientX, event.clientY);
                 }
             }
