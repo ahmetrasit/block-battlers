@@ -37,7 +37,7 @@ export class CombatSystem {
         }
 
         const weaponBlocks = this.gameState.vehicle.blocks.filter(
-            block => block.userData.type === 'weapon'
+            block => block.userData.type === 'weapon' || block.userData.type === 'laser'
         );
 
         if (weaponBlocks.length === 0) return false;
@@ -52,17 +52,26 @@ export class CombatSystem {
             direction.applyQuaternion(this.gameState.vehicle.group.quaternion);
             direction.applyQuaternion(weapon.quaternion);
 
+            // Laser weapons have different properties
+            const isLaser = weapon.userData.type === 'laser';
+            const speed = isLaser ? 40 : 30; // Lasers are faster
+            const damage = isLaser ? 15 : 10; // Lasers do more damage
+
             // Fire projectile
             this.projectilePool.fire(
                 weaponWorldPos,
                 direction,
-                30, // Speed
+                speed,
                 'player', // Owner
-                10 // Damage
+                damage
             );
 
-            // Muzzle flash effect
-            this.createMuzzleFlash(weaponWorldPos);
+            // Muzzle flash effect (different color for laser)
+            if (isLaser) {
+                this.createLaserFlash(weaponWorldPos);
+            } else {
+                this.createMuzzleFlash(weaponWorldPos);
+            }
         });
 
         this.lastShotTime = currentTime;
@@ -76,7 +85,7 @@ export class CombatSystem {
      */
     fireEnemyWeapons(enemy, targetDirection) {
         const weaponBlocks = enemy.blocks.filter(
-            block => block.userData.type === 'weapon'
+            block => block.userData.type === 'weapon' || block.userData.type === 'laser'
         );
 
         weaponBlocks.forEach(weapon => {
@@ -85,13 +94,18 @@ export class CombatSystem {
             weapon.getWorldPosition(weaponWorldPos);
             weaponWorldPos.add(enemy.group.position);
 
+            // Laser weapons have different properties
+            const isLaser = weapon.userData.type === 'laser';
+            const speed = isLaser ? 30 : 20; // Enemy lasers faster than regular weapons
+            const damage = isLaser ? 12 : 8; // Enemy lasers do more damage
+
             // Fire projectile
             this.projectilePool.fire(
                 weaponWorldPos,
                 targetDirection,
-                20, // Slower than player projectiles
+                speed,
                 'enemy', // Owner
-                8 // Less damage than player
+                damage
             );
         });
     }
@@ -258,6 +272,20 @@ export class CombatSystem {
      */
     createMuzzleFlash(position) {
         const flash = new THREE.PointLight(0xffff00, 2, 5);
+        flash.position.copy(position);
+        this.scene.add(flash);
+
+        setTimeout(() => {
+            this.scene.remove(flash);
+        }, 50);
+    }
+
+    /**
+     * Create laser flash effect (cyan/blue)
+     * @param {THREE.Vector3} position - Flash position
+     */
+    createLaserFlash(position) {
+        const flash = new THREE.PointLight(0x00ffff, 3, 6);
         flash.position.copy(position);
         this.scene.add(flash);
 
