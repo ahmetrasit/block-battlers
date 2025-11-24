@@ -76,7 +76,8 @@ export class Game {
                 this.renderer.scene,
                 this.gameState,
                 this.vehicleBuilder,
-                this.enemyManager
+                this.enemyManager,
+                () => this.endBattle() // Pass endBattle as callback
             );
 
             this.controlSystem = new ControlSystem(

@@ -10,11 +10,12 @@ import { ProjectilePool, ParticlePool } from '../utils/pool.js';
  * CombatSystem class for managing combat mechanics
  */
 export class CombatSystem {
-    constructor(scene, gameState, vehicleBuilder, enemyManager) {
+    constructor(scene, gameState, vehicleBuilder, enemyManager, onBattleEnd = null) {
         this.scene = scene;
         this.gameState = gameState;
         this.vehicleBuilder = vehicleBuilder;
         this.enemyManager = enemyManager;
+        this.onBattleEnd = onBattleEnd; // Callback for when battle should end
 
         // Projectile and particle systems
         this.projectilePool = new ProjectilePool(scene);
@@ -376,8 +377,10 @@ export class CombatSystem {
         // Show defeat message
         alert(`Core destroyed! Returning to Wave 1.\nYou kept your materials and vehicle.`);
 
-        // Return to build mode
-        this.endBattle();
+        // Return to build mode via callback
+        if (this.onBattleEnd) {
+            this.onBattleEnd();
+        }
     }
 
     /**
@@ -390,33 +393,10 @@ export class CombatSystem {
         // Show victory message
         alert(`Wave ${this.gameState.waveNumber - 1} Complete!\nPrepare for Wave ${this.gameState.waveNumber}`);
 
-        // Return to build mode
-        this.endBattle();
-    }
-
-    /**
-     * End battle and return to build mode
-     */
-    endBattle() {
-        // Clear combat objects
-        this.projectilePool.clear();
-        this.particlePool.clear();
-        this.enemyManager.clearEnemies();
-
-        // Reset vehicle position
-        this.gameState.vehicle.group.position.set(0, 0, 0);
-        this.gameState.vehicle.group.rotation.set(0, 0, 0);
-
-        // Switch mode
-        this.gameState.mode = 'build';
-
-        // Update UI
-        const modeToggle = document.getElementById('modeToggle');
-        if (modeToggle) {
-            modeToggle.textContent = 'START BATTLE';
+        // Return to build mode via callback
+        if (this.onBattleEnd) {
+            this.onBattleEnd();
         }
-
-        document.body.classList.remove('battle-mode');
     }
 
     /**
