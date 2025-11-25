@@ -228,7 +228,7 @@ export class GameState {
         this.waveNumber = 1;
         this.battlesWon = 0;
         this.materials = {
-            iron: 50,
+            iron: 75,
             copper: 50
         };
         this.vehicle = {
@@ -261,7 +261,7 @@ export class GameState {
         this.score = 0;
         this.waveNumber = 1;
         this.battlesWon = 0;
-        this.materials.iron = 50;
+        this.materials.iron = 75;
         this.materials.copper = 50;
         this.enemies = [];
         this.projectiles = [];

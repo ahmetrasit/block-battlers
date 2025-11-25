@@ -62,21 +62,21 @@ export const BLOCK_COLORS = {
     cannon: 0x8b0000      // Dark red
 };
 
-// Block weights for physics calculation
+// Block weights for physics calculation (increased for challenge)
 export const BLOCK_WEIGHTS = {
-    armor: 1.05,
-    weapon: 0.7,
-    engine: 1.4,
-    core: 1.75,
-    wheel: 0.7,
-    spike: 0.35,
-    largewheel: 1.05,
-    // New blocks
-    shield: 0.9,
-    booster: 0.8,
-    repair: 1.0,
-    heavyarmor: 2.5,  // Very heavy!
-    laser: 1.2,
+    armor: 4.0,       // Was 1.05
+    weapon: 3.0,      // Was 0.7
+    engine: 5.5,      // Was 1.4
+    core: 7.0,        // Was 1.75
+    wheel: 2.5,       // Was 0.7
+    spike: 1.5,       // Was 0.35
+    largewheel: 4.0,  // Was 1.05
+    // Advanced blocks
+    shield: 3.5,      // Was 0.9
+    booster: 3.0,     // Was 0.8
+    repair: 4.0,      // Was 1.0
+    heavyarmor: 10.0, // Was 2.5
+    laser: 5.0,       // Was 1.2
     tanktread: 0,     // Weightless - carries weight
     cannon: 150       // Extremely heavy late-game weapon
 };
