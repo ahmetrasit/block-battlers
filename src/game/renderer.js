@@ -197,11 +197,11 @@ export class Renderer {
         this.placementGrid = [];
 
         // Generate grid positions (7x7x7 cube centered at origin)
-        // Blocks sit directly on baseplate (y=0 is ground level)
+        // Block centers at y=0.5, 1.5, 2.5... so bottoms sit on ground
         for (let x = -3; x <= 3; x++) {
             for (let y = 0; y <= 6; y++) {
                 for (let z = -3; z <= 3; z++) {
-                    this.placementGrid.push(new THREE.Vector3(x, y, z));
+                    this.placementGrid.push(new THREE.Vector3(x, y + 0.5, z));
                 }
             }
         }
