@@ -19,6 +19,8 @@ export class ControlSystem {
         this.keys = {};
         this.mousePosition = { x: 0, y: 0 };
         this.normalizedMouse = new THREE.Vector2();
+        this.mouseDownPosition = { x: 0, y: 0 };
+        this.mouseDownTime = 0;
 
         // Movement state
         this.moveForward = false;
@@ -473,8 +475,8 @@ export class ControlSystem {
         moveVector.applyQuaternion(this.gameState.vehicle.group.quaternion);
         this.gameState.vehicle.group.position.add(moveVector);
 
-        // Keep vehicle slightly above ground
-        this.gameState.vehicle.group.position.y = 0.5;
+        // Keep vehicle on ground
+        this.gameState.vehicle.group.position.y = 0;
 
         // Shooting
         if (this.isShooting) {
