@@ -176,12 +176,12 @@ export class Renderer {
 
         const gridPoints = [];
         for (let i = -3; i <= 3; i++) {
-            // Horizontal lines - exactly at y = 0 (top of base plate)
-            gridPoints.push(new THREE.Vector3(-3, 0.01, i));
-            gridPoints.push(new THREE.Vector3(3, 0.01, i));
+            // Horizontal lines - at ground level where blocks sit
+            gridPoints.push(new THREE.Vector3(-3, -0.49, i));
+            gridPoints.push(new THREE.Vector3(3, -0.49, i));
             // Vertical lines
-            gridPoints.push(new THREE.Vector3(i, 0.01, -3));
-            gridPoints.push(new THREE.Vector3(i, 0.01, 3));
+            gridPoints.push(new THREE.Vector3(i, -0.49, -3));
+            gridPoints.push(new THREE.Vector3(i, -0.49, 3));
         }
 
         const gridGeometry = new THREE.BufferGeometry().setFromPoints(gridPoints);
@@ -197,10 +197,11 @@ export class Renderer {
         this.placementGrid = [];
 
         // Generate grid positions (7x7x7 cube centered at origin)
+        // Blocks sit directly on baseplate (y=0 is ground level)
         for (let x = -3; x <= 3; x++) {
             for (let y = 0; y <= 6; y++) {
                 for (let z = -3; z <= 3; z++) {
-                    this.placementGrid.push(new THREE.Vector3(x, y + 0.5, z));
+                    this.placementGrid.push(new THREE.Vector3(x, y, z));
                 }
             }
         }

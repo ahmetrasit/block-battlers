@@ -94,24 +94,24 @@ export class VehicleBuilder {
 
                 // Check if we hit a block or the base plate
                 if (intersection.object === this.renderer.basePlate) {
-                    // Hit base plate - place on top of it
+                    // Hit base plate - place on top of it at ground level
                     targetPoint = intersection.point.clone();
-                    targetPoint.y = 0.5; // Blocks sit at y = 0.5 on the base
+                    targetPoint.y = 0; // Blocks sit at y = 0 (ground level)
                 } else if (intersection.face) {
-                    // Hit an existing block
+                    // Hit an existing block - place adjacent (1 unit away)
                     const normal = intersection.face.normal.clone();
                     normal.transformDirection(intersection.object.matrixWorld);
-                    targetPoint = intersection.point.clone().add(normal.multiplyScalar(0.5));
+                    targetPoint = intersection.point.clone().add(normal.multiplyScalar(1.0));
                 }
             }
 
-            // If no intersection, use a plane at y = 0
+            // If no intersection, use a plane at ground level
             if (!targetPoint) {
                 const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
                 const planePoint = new THREE.Vector3();
                 if (this.raycaster.ray.intersectPlane(plane, planePoint)) {
                     targetPoint = planePoint;
-                    targetPoint.y = 0.5;
+                    targetPoint.y = 0; // Ground level
                 }
             }
 
