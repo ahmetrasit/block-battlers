@@ -95,7 +95,7 @@ export class EnemyManager {
 
             // Get the block's geometry to find its actual height
             const geometry = block.geometry;
-            if (geometry && geometry.boundingBox) {
+            if (geometry) {
                 geometry.computeBoundingBox();
                 const halfHeight = (geometry.boundingBox.max.y - geometry.boundingBox.min.y) / 2;
                 const bottomY = blockPos.y - halfHeight;
@@ -106,7 +106,8 @@ export class EnemyManager {
             }
         }
 
-        return lowestY;
+        // If no valid blocks found, return 0 as default
+        return lowestY === Infinity ? 0 : lowestY;
     }
 
     /**
