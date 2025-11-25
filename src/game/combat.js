@@ -24,6 +24,8 @@ export class CombatSystem {
         // Combat state
         this.lastShotTime = 0;
         this.shotCooldown = 200; // ms between shots
+        this.lastCannonTime = 0;
+        this.cannonCooldown = 1000; // ms between cannon shots (slower)
         this.spikeCollisionCooldown = new Map(); // Track spike collision cooldowns
     }
 
@@ -33,50 +35,93 @@ export class CombatSystem {
      */
     fireWeapons() {
         const currentTime = Date.now();
-        if (currentTime - this.lastShotTime < this.shotCooldown) {
-            return false;
-        }
+        let fired = false;
 
-        const weaponBlocks = this.gameState.vehicle.blocks.filter(
-            block => block.userData.type === 'weapon' || block.userData.type === 'laser'
-        );
-
-        if (weaponBlocks.length === 0) return false;
-
-        weaponBlocks.forEach(weapon => {
-            // Get weapon world position
-            const weaponWorldPos = new THREE.Vector3();
-            weapon.getWorldPosition(weaponWorldPos);
-
-            // Calculate firing direction based on weapon and vehicle rotation
-            const direction = new THREE.Vector3(0, 0, -1);
-            direction.applyQuaternion(this.gameState.vehicle.group.quaternion);
-            direction.applyQuaternion(weapon.quaternion);
-
-            // Laser weapons have different properties
-            const isLaser = weapon.userData.type === 'laser';
-            const speed = isLaser ? 40 : 30; // Lasers are faster
-            const damage = isLaser ? 15 : 10; // Lasers do more damage
-
-            // Fire projectile
-            this.projectilePool.fire(
-                weaponWorldPos,
-                direction,
-                speed,
-                'player', // Owner
-                damage
+        // Fire regular weapons and lasers
+        if (currentTime - this.lastShotTime >= this.shotCooldown) {
+            const weaponBlocks = this.gameState.vehicle.blocks.filter(
+                block => block.userData.type === 'weapon' || block.userData.type === 'laser'
             );
 
-            // Muzzle flash effect (different color for laser)
-            if (isLaser) {
-                this.createLaserFlash(weaponWorldPos);
-            } else {
-                this.createMuzzleFlash(weaponWorldPos);
-            }
-        });
+            if (weaponBlocks.length > 0) {
+                weaponBlocks.forEach(weapon => {
+                    // Get weapon world position
+                    const weaponWorldPos = new THREE.Vector3();
+                    weapon.getWorldPosition(weaponWorldPos);
 
-        this.lastShotTime = currentTime;
-        return true;
+                    // Calculate firing direction based on weapon and vehicle rotation
+                    const direction = new THREE.Vector3(0, 0, -1);
+                    direction.applyQuaternion(this.gameState.vehicle.group.quaternion);
+                    direction.applyQuaternion(weapon.quaternion);
+
+                    // Laser weapons have different properties
+                    const isLaser = weapon.userData.type === 'laser';
+                    const speed = isLaser ? 40 : 30; // Lasers are faster
+                    const damage = isLaser ? 15 : 10; // Regular damage
+
+                    // Fire projectile
+                    const projectile = this.projectilePool.fire(
+                        weaponWorldPos,
+                        direction,
+                        speed,
+                        'player', // Owner
+                        damage
+                    );
+
+                    // Muzzle flash effect (different color for laser)
+                    if (isLaser) {
+                        this.createLaserFlash(weaponWorldPos);
+                    } else {
+                        this.createMuzzleFlash(weaponWorldPos);
+                    }
+                });
+
+                this.lastShotTime = currentTime;
+                fired = true;
+            }
+        }
+
+        // Fire cannons (slower rate, splash damage)
+        if (currentTime - this.lastCannonTime >= this.cannonCooldown) {
+            const cannonBlocks = this.gameState.vehicle.blocks.filter(
+                block => block.userData.type === 'cannon'
+            );
+
+            if (cannonBlocks.length > 0) {
+                cannonBlocks.forEach(cannon => {
+                    // Get cannon world position
+                    const cannonWorldPos = new THREE.Vector3();
+                    cannon.getWorldPosition(cannonWorldPos);
+
+                    // Calculate firing direction
+                    const direction = new THREE.Vector3(0, 0, -1);
+                    direction.applyQuaternion(this.gameState.vehicle.group.quaternion);
+                    direction.applyQuaternion(cannon.quaternion);
+
+                    // Fire cannon projectile (slow, heavy damage, splash)
+                    const projectile = this.projectilePool.fire(
+                        cannonWorldPos,
+                        direction,
+                        20, // Slower than regular weapons
+                        'player',
+                        30 // High damage
+                    );
+
+                    // Mark as cannon shot for splash damage
+                    if (projectile) {
+                        projectile.userData.isCannon = true;
+                    }
+
+                    // Cannon flash (orange/yellow)
+                    this.createCannonFlash(cannonWorldPos);
+                });
+
+                this.lastCannonTime = currentTime;
+                fired = true;
+            }
+        }
+
+        return fired;
     }
 
     /**
@@ -152,6 +197,8 @@ export class CombatSystem {
                 this.gameState.enemies.forEach(enemy => {
                     if (enemy.blocks.length === 0) return;
 
+                    const isCannon = projectile.userData.isCannon;
+
                     // Check each enemy block for hit
                     for (let block of enemy.blocks) {
                         const blockWorldPos = new THREE.Vector3();
@@ -163,8 +210,25 @@ export class CombatSystem {
                             // Damage enemy
                             const result = this.enemyManager.damageEnemy(enemy, projectile.userData.damage);
 
-                            // Create impact effect
-                            this.createImpactEffect(projectilePos);
+                            // Cannon splash damage - damage nearby blocks
+                            if (isCannon) {
+                                const splashRadius = 2.5;
+                                enemy.blocks.forEach(nearbyBlock => {
+                                    const nearbyPos = new THREE.Vector3();
+                                    nearbyBlock.getWorldPosition(nearbyPos);
+                                    nearbyPos.add(enemy.group.position);
+
+                                    const splashDist = nearbyPos.distanceTo(projectilePos);
+                                    if (splashDist < splashRadius && splashDist > 0.8) {
+                                        // Reduced splash damage
+                                        this.enemyManager.damageEnemy(enemy, projectile.userData.damage * 0.5);
+                                    }
+                                });
+                                // Bigger explosion effect
+                                this.createCannonExplosion(projectilePos);
+                            } else {
+                                this.createImpactEffect(projectilePos);
+                            }
 
                             // Release projectile
                             this.projectilePool.release(projectile);
@@ -328,6 +392,43 @@ export class CombatSystem {
         setTimeout(() => {
             this.scene.remove(flash);
         }, 50);
+    }
+
+    /**
+     * Create cannon flash effect (bright orange)
+     * @param {THREE.Vector3} position - Flash position
+     */
+    createCannonFlash(position) {
+        const flash = new THREE.PointLight(0xff6600, 4, 8);
+        flash.position.copy(position);
+        this.scene.add(flash);
+
+        setTimeout(() => {
+            this.scene.remove(flash);
+        }, 100);
+    }
+
+    /**
+     * Create cannon explosion effect (large splash)
+     * @param {THREE.Vector3} position - Explosion position
+     */
+    createCannonExplosion(position) {
+        // Large explosion particles
+        this.particlePool.emit(position, 20, {
+            color: 0xff6600,
+            speed: 8,
+            spread: 3,
+            lifetime: 1000
+        });
+
+        // Bright explosion flash
+        const flash = new THREE.PointLight(0xff6600, 6, 10);
+        flash.position.copy(position);
+        this.scene.add(flash);
+
+        setTimeout(() => {
+            this.scene.remove(flash);
+        }, 150);
     }
 
     /**

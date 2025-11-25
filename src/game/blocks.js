@@ -19,7 +19,9 @@ export const BLOCK_COSTS = {
     booster: { iron: 5, copper: 3 },
     repair: { iron: 4, copper: 5 },
     heavyarmor: { iron: 6, copper: 0 },
-    laser: { iron: 4, copper: 6 }
+    laser: { iron: 4, copper: 6 },
+    tanktread: { iron: 12, copper: 8 },  // Extremely expensive
+    cannon: { iron: 8, copper: 7 }
 };
 
 // Max health for each block type
@@ -36,7 +38,9 @@ export const BLOCK_MAX_HEALTH = {
     booster: 25,
     repair: 30,
     heavyarmor: 100,
-    laser: 30
+    laser: 30,
+    tanktread: 50,
+    cannon: 40
 };
 
 // Block colors
@@ -53,7 +57,9 @@ export const BLOCK_COLORS = {
     booster: 0xff00ff,    // Magenta
     repair: 0x00ff00,     // Green
     heavyarmor: 0x1e3a8a, // Dark blue
-    laser: 0xff0080       // Hot pink
+    laser: 0xff0080,      // Hot pink
+    tanktread: 0x3d3d3d,  // Medium gray
+    cannon: 0x8b0000      // Dark red
 };
 
 // Block weights for physics calculation
@@ -70,13 +76,16 @@ export const BLOCK_WEIGHTS = {
     booster: 0.8,
     repair: 1.0,
     heavyarmor: 2.5,  // Very heavy!
-    laser: 1.2
+    laser: 1.2,
+    tanktread: 0,     // Weightless - carries weight
+    cannon: 0         // Weightless
 };
 
 // Weight capacity each wheel type can support
 export const WHEEL_CAPACITY = {
     wheel: 3.5,       // Was 10, now 35% of original
-    largewheel: 7     // Was 20
+    largewheel: 7,    // Was 20
+    tanktread: 50     // Massive capacity for heavy tanks
 };
 
 // Block display names
@@ -92,7 +101,9 @@ export const BLOCK_NAMES = {
     booster: 'Booster',
     repair: 'Repair',
     heavyarmor: 'Heavy Armor',
-    laser: 'Laser'
+    laser: 'Laser',
+    tanktread: 'Tank Tread',
+    cannon: 'Cannon'
 };
 
 // Block descriptions
@@ -108,7 +119,9 @@ export const BLOCK_DESCRIPTIONS = {
     booster: 'Speed burst',
     repair: 'Self-repair',
     heavyarmor: 'Ultra defense',
-    laser: 'Continuous beam'
+    laser: 'Continuous beam',
+    tanktread: 'Carries 50 weight',
+    cannon: 'Splash damage'
 };
 
 // Block icons (emoji for now)
@@ -124,7 +137,9 @@ export const BLOCK_ICONS = {
     booster: '🚀',
     repair: '🔧',
     heavyarmor: '🏰',
-    laser: '💥'
+    laser: '💥',
+    tanktread: '🚜',
+    cannon: '💣'
 };
 
 /**
@@ -189,6 +204,15 @@ export function createBlockGeometry(type) {
             // Tapered laser emitter - narrow front for clear firing direction
             geometry = new THREE.CylinderGeometry(0.15, 0.4, 1.4, 8);
             geometry.rotateX(-Math.PI / 2); // Narrow end points forward (negative Z)
+            break;
+        case 'tanktread':
+            // Flat rectangular tread
+            geometry = new THREE.BoxGeometry(1.2, 0.5, 0.8);
+            break;
+        case 'cannon':
+            // Large barrel with thick base
+            geometry = new THREE.CylinderGeometry(0.3, 0.5, 1.6, 8);
+            geometry.rotateX(-Math.PI / 2); // Point forward
             break;
         default:
             geometry = new THREE.BoxGeometry(1, 1, 1);

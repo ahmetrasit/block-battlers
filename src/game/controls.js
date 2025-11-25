@@ -314,7 +314,7 @@ export class ControlSystem {
         // All block types in order
         const blockTypes = [
             'armor', 'weapon', 'spike', 'engine', 'core', 'wheel', 'largewheel',
-            'shield', 'booster', 'repair', 'heavyarmor', 'laser'
+            'shield', 'booster', 'repair', 'heavyarmor', 'laser', 'tanktread', 'cannon'
         ];
 
         // Create block cards

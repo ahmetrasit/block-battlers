@@ -371,6 +371,7 @@ export class VehicleBuilder {
         let wheelCapacity = 0;
         wheelCapacity += counts.wheel * WHEEL_CAPACITY.wheel;
         wheelCapacity += counts.largewheel * WHEEL_CAPACITY.largewheel;
+        wheelCapacity += counts.tanktread * WHEEL_CAPACITY.tanktread;
 
         // Calculate movement stats
         const enginePower = counts.engine * 2.5; // Increased from 1.5 to 2.5
