@@ -175,8 +175,8 @@ export class Game {
     startBattle() {
         this.gameState.mode = 'battle';
 
-        // Position vehicle slightly above ground for battle
-        this.gameState.vehicle.group.position.set(0, 0.5, 0);
+        // Position vehicle at ground level for battle
+        this.gameState.vehicle.group.position.set(0, 0, 0);
         this.gameState.vehicle.group.rotation.set(0, 0, 0);
         this.vehicleBuilder.vehicleVelocity.set(0, 0, 0);
         this.vehicleBuilder.vehicleRotation = 0;
