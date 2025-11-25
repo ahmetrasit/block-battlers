@@ -176,12 +176,12 @@ export class Renderer {
 
         const gridPoints = [];
         for (let i = -3; i <= 3; i++) {
-            // Horizontal lines - at ground level where blocks sit
-            gridPoints.push(new THREE.Vector3(-3, -0.49, i));
-            gridPoints.push(new THREE.Vector3(3, -0.49, i));
+            // Horizontal lines - just above baseplate where blocks sit
+            gridPoints.push(new THREE.Vector3(-3, 0.01, i));
+            gridPoints.push(new THREE.Vector3(3, 0.01, i));
             // Vertical lines
-            gridPoints.push(new THREE.Vector3(i, -0.49, -3));
-            gridPoints.push(new THREE.Vector3(i, -0.49, 3));
+            gridPoints.push(new THREE.Vector3(i, 0.01, -3));
+            gridPoints.push(new THREE.Vector3(i, 0.01, 3));
         }
 
         const gridGeometry = new THREE.BufferGeometry().setFromPoints(gridPoints);
