@@ -293,6 +293,48 @@ button:active {
     box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
 }
 
+#weightBar {
+    position: absolute;
+    top: 140px;
+    left: 20px;
+    width: 300px;
+}
+
+.bar-label {
+    color: #00ffcc;
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+}
+
+.bar-container {
+    width: 100%;
+    height: 25px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(0, 255, 204, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#weightFill {
+    height: 100%;
+    transition: width 0.3s, background 0.3s;
+    box-shadow: 0 0 20px rgba(255, 204, 0, 0.5);
+}
+
+#weightFill.normal {
+    background: linear-gradient(90deg, #00ff88, #00ffcc);
+}
+
+#weightFill.warning {
+    background: linear-gradient(90deg, #ffcc00, #ff9900);
+}
+
+#weightFill.critical {
+    background: linear-gradient(90deg, #ff4444, #cc0000);
+}
+
 .damage-flash {
     animation: flash 0.3s;
 }

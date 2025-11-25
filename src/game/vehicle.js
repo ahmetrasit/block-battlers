@@ -373,11 +373,24 @@ export class VehicleBuilder {
         wheelCapacity += counts.largewheel * WHEEL_CAPACITY.largewheel;
         wheelCapacity += counts.tanktread * WHEEL_CAPACITY.tanktread;
 
-        // Calculate movement stats
-        const enginePower = counts.engine * 2.5; // Increased from 1.5 to 2.5
+        // Calculate movement stats with harsh overweight penalties
+        const enginePower = counts.engine * 2.5;
         const weightRatio = wheelCapacity > 0 ? totalWeight / wheelCapacity : Infinity;
-        const baseSpeedMultiplier = Math.max(0.2, Math.min(1, 1 / weightRatio));
-        // Add engine bonus: each engine adds 15% speed (up to +60% with 4 engines)
+
+        let baseSpeedMultiplier;
+        if (weightRatio > 2.0) {
+            // Over 200% capacity - can't move
+            baseSpeedMultiplier = 0;
+        } else if (weightRatio > 1.0) {
+            // Over capacity - severe penalty (exponential slowdown)
+            const overweightAmount = weightRatio - 1.0; // 0 to 1
+            baseSpeedMultiplier = Math.max(0.05, 1.0 - (overweightAmount * 2)); // Drops fast
+        } else {
+            // Under capacity - normal calculation
+            baseSpeedMultiplier = Math.max(0.2, Math.min(1, 1 / weightRatio));
+        }
+
+        // Add engine bonus: each engine adds 15% speed
         const engineBonus = counts.engine * 0.15;
         const speedMultiplier = Math.min(2.0, baseSpeedMultiplier + engineBonus);
 
@@ -389,6 +402,7 @@ export class VehicleBuilder {
         return {
             totalWeight,
             wheelCapacity,
+            weightRatio,
             enginePower,
             speedMultiplier,
             weaponDamage,
@@ -407,6 +421,37 @@ export class VehicleBuilder {
 
         if (ironElement) ironElement.textContent = this.gameState.materials.iron;
         if (copperElement) copperElement.textContent = this.gameState.materials.copper;
+
+        // Update weight bar
+        this.updateWeightBar();
+    }
+
+    /**
+     * Update weight bar display
+     */
+    updateWeightBar() {
+        const stats = this.calculateVehicleStats();
+        const weightText = document.getElementById('weightText');
+        const weightFill = document.getElementById('weightFill');
+
+        if (weightText && weightFill) {
+            // Update text
+            weightText.textContent = `${stats.totalWeight.toFixed(1)} / ${stats.wheelCapacity.toFixed(1)}`;
+
+            // Calculate percentage (cap at 200% for visual purposes)
+            const percentage = Math.min(200, (stats.totalWeight / Math.max(1, stats.wheelCapacity)) * 100);
+            weightFill.style.width = `${percentage / 2}%`; // Divide by 2 so 100% fills the bar
+
+            // Update color based on weight ratio
+            weightFill.className = '';
+            if (stats.weightRatio > 2.0) {
+                weightFill.classList.add('critical'); // Red - can't move
+            } else if (stats.weightRatio > 1.0) {
+                weightFill.classList.add('warning'); // Orange - overweight
+            } else {
+                weightFill.classList.add('normal'); // Green - good
+            }
+        }
     }
 
     /**

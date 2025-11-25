@@ -5,23 +5,23 @@
 
 import * as THREE from 'three';
 
-// Block material costs
+// Block material costs (increased for progression)
 export const BLOCK_COSTS = {
-    armor: { iron: 3, copper: 0 },
-    weapon: { iron: 2, copper: 3 },
-    engine: { iron: 4, copper: 4 },
-    core: { iron: 5, copper: 5 },
-    wheel: { iron: 2, copper: 1 },
-    spike: { iron: 1, copper: 0 },
-    largewheel: { iron: 3, copper: 2 },
-    // New blocks
-    shield: { iron: 3, copper: 4 },
-    booster: { iron: 5, copper: 3 },
-    repair: { iron: 4, copper: 5 },
-    heavyarmor: { iron: 6, copper: 0 },
-    laser: { iron: 4, copper: 6 },
-    tanktread: { iron: 12, copper: 8 },  // Extremely expensive
-    cannon: { iron: 8, copper: 7 }
+    armor: { iron: 5, copper: 2 },
+    weapon: { iron: 4, copper: 5 },
+    engine: { iron: 6, copper: 6 },
+    core: { iron: 8, copper: 8 },
+    wheel: { iron: 3, copper: 2 },
+    spike: { iron: 2, copper: 1 },
+    largewheel: { iron: 5, copper: 4 },
+    // Advanced blocks
+    shield: { iron: 6, copper: 7 },
+    booster: { iron: 8, copper: 5 },
+    repair: { iron: 7, copper: 8 },
+    heavyarmor: { iron: 10, copper: 3 },
+    laser: { iron: 8, copper: 10 },
+    tanktread: { iron: 45, copper: 15 },  // Late-game mobility
+    cannon: { iron: 30, copper: 20 }      // Late-game weapon
 };
 
 // Max health for each block type
@@ -78,7 +78,7 @@ export const BLOCK_WEIGHTS = {
     heavyarmor: 2.5,  // Very heavy!
     laser: 1.2,
     tanktread: 0,     // Weightless - carries weight
-    cannon: 0         // Weightless
+    cannon: 150       // Extremely heavy late-game weapon
 };
 
 // Weight capacity each wheel type can support
@@ -210,9 +210,8 @@ export function createBlockGeometry(type) {
             geometry = new THREE.BoxGeometry(1.2, 0.5, 0.8);
             break;
         case 'cannon':
-            // Large barrel with thick base
-            geometry = new THREE.CylinderGeometry(0.3, 0.5, 1.6, 8);
-            geometry.rotateX(-Math.PI / 2); // Point forward
+            // Massive 3x3x2 artillery cannon
+            geometry = new THREE.BoxGeometry(3, 3, 2);
             break;
         default:
             geometry = new THREE.BoxGeometry(1, 1, 1);
