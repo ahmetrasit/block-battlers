@@ -107,7 +107,7 @@ export class EnemyManager {
         const distance = 15 + (this.gameState.waveNumber * 2);
         enemy.group.position.set(
             Math.sin(angle) * distance,
-            0,
+            -0.5,
             Math.cos(angle) * distance
         );
 
