@@ -152,7 +152,7 @@ export function createBlockGeometry(type) {
     switch(type) {
         case 'armor':
             // Thick cube for armor
-            geometry = new THREE.BoxGeometry(1, 0.8, 1);
+            geometry = new THREE.BoxGeometry(1, 1, 1);
             break;
         case 'weapon':
             // Tapered barrel - narrow front for clear firing direction
@@ -170,7 +170,7 @@ export function createBlockGeometry(type) {
             break;
         case 'wheel':
             // Torus/wheel shape
-            geometry = new THREE.CylinderGeometry(0.4, 0.4, 0.6, 16);
+            geometry = new THREE.CylinderGeometry(0.4, 0.4, 1.0, 16);
             geometry.rotateZ(Math.PI / 2);
             break;
         case 'spike':
@@ -185,7 +185,7 @@ export function createBlockGeometry(type) {
             break;
         case 'shield':
             // Hexagonal shield generator
-            geometry = new THREE.CylinderGeometry(0.5, 0.5, 0.4, 6);
+            geometry = new THREE.CylinderGeometry(0.5, 0.5, 1.0, 6);
             break;
         case 'booster':
             // Conical booster
@@ -194,7 +194,7 @@ export function createBlockGeometry(type) {
             break;
         case 'repair':
             // Plus-shaped repair block
-            geometry = new THREE.BoxGeometry(0.8, 0.3, 0.8);
+            geometry = new THREE.BoxGeometry(0.8, 1.0, 0.8);
             break;
         case 'heavyarmor':
             // Thick, imposing cube
@@ -207,7 +207,7 @@ export function createBlockGeometry(type) {
             break;
         case 'tanktread':
             // Flat rectangular tread
-            geometry = new THREE.BoxGeometry(1.2, 0.5, 0.8);
+            geometry = new THREE.BoxGeometry(1.2, 1.0, 0.8);
             break;
         case 'cannon':
             // Massive 3x3x2 artillery cannon
