@@ -79,6 +79,37 @@ export class EnemyManager {
     }
 
     /**
+     * Calculate the lowest Y position of an enemy's blocks
+     * @param {Object} enemy - Enemy object
+     * @returns {number} The lowest Y position (bottom of the lowest block)
+     */
+    calculateEnemyLowestPoint(enemy) {
+        if (enemy.blocks.length === 0) {
+            return 0;
+        }
+
+        let lowestY = Infinity;
+
+        for (const block of enemy.blocks) {
+            const blockPos = block.position.clone();
+
+            // Get the block's geometry to find its actual height
+            const geometry = block.geometry;
+            if (geometry && geometry.boundingBox) {
+                geometry.computeBoundingBox();
+                const halfHeight = (geometry.boundingBox.max.y - geometry.boundingBox.min.y) / 2;
+                const bottomY = blockPos.y - halfHeight;
+
+                if (bottomY < lowestY) {
+                    lowestY = bottomY;
+                }
+            }
+        }
+
+        return lowestY;
+    }
+
+    /**
      * Create a single enemy vehicle
      * @param {number} index - Enemy index for positioning
      * @param {number} totalCount - Total number of enemies in wave
@@ -102,15 +133,6 @@ export class EnemyManager {
             }
         };
 
-        // Position enemy based on index
-        const angle = (index / Math.max(1, totalCount)) * Math.PI * 2;
-        const distance = 15 + (this.gameState.waveNumber * 2);
-        enemy.group.position.set(
-            Math.sin(angle) * distance,
-            0,
-            Math.cos(angle) * distance
-        );
-
         // Generate enemy vehicle based on type
         switch(type) {
             case 'swarmer':
@@ -130,6 +152,19 @@ export class EnemyManager {
                 this.generateRegular(enemy);
                 break;
         }
+
+        // Calculate the lowest point and adjust position so enemy sits on ground
+        const lowestPoint = this.calculateEnemyLowestPoint(enemy);
+        const yOffset = -lowestPoint;
+
+        // Position enemy based on index with proper ground alignment
+        const angle = (index / Math.max(1, totalCount)) * Math.PI * 2;
+        const distance = 15 + (this.gameState.waveNumber * 2);
+        enemy.group.position.set(
+            Math.sin(angle) * distance,
+            yOffset,
+            Math.cos(angle) * distance
+        );
 
         // Add enemy group to scene
         this.scene.add(enemy.group);
@@ -494,6 +529,10 @@ export class EnemyManager {
             if (distance > 3) {
                 enemy.velocity.lerp(direction.multiplyScalar(speed), 0.1);
                 enemy.group.position.add(enemy.velocity.clone().multiplyScalar(deltaTime));
+
+                // Keep enemy at proper ground level
+                const lowestPoint = this.calculateEnemyLowestPoint(enemy);
+                enemy.group.position.y = -lowestPoint;
             }
 
             // Rotate towards player

@@ -700,6 +700,38 @@ export class VehicleBuilder {
     }
 
     /**
+     * Calculate the lowest Y position of the vehicle's blocks
+     * This accounts for blocks with different heights
+     * @returns {number} The lowest Y position (bottom of the lowest block)
+     */
+    calculateLowestPoint() {
+        if (this.gameState.vehicle.blocks.length === 0) {
+            return 0;
+        }
+
+        let lowestY = Infinity;
+
+        for (const block of this.gameState.vehicle.blocks) {
+            const blockWorldPos = new THREE.Vector3();
+            block.getWorldPosition(blockWorldPos);
+
+            // Get the block's geometry to find its actual height
+            const geometry = block.geometry;
+            if (geometry && geometry.boundingBox) {
+                geometry.computeBoundingBox();
+                const halfHeight = (geometry.boundingBox.max.y - geometry.boundingBox.min.y) / 2;
+                const bottomY = blockWorldPos.y - halfHeight;
+
+                if (bottomY < lowestY) {
+                    lowestY = bottomY;
+                }
+            }
+        }
+
+        return lowestY;
+    }
+
+    /**
      * Dispose of all resources
      */
     dispose() {

@@ -475,8 +475,9 @@ export class ControlSystem {
         moveVector.applyQuaternion(this.gameState.vehicle.group.quaternion);
         this.gameState.vehicle.group.position.add(moveVector);
 
-        // Keep vehicle on ground
-        this.gameState.vehicle.group.position.y = 0;
+        // Keep vehicle at proper ground level (calculate offset for lowest block)
+        const lowestPoint = this.vehicleBuilder.calculateLowestPoint();
+        this.gameState.vehicle.group.position.y = -lowestPoint;
 
         // Shooting
         if (this.isShooting) {

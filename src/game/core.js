@@ -175,8 +175,14 @@ export class Game {
     startBattle() {
         this.gameState.mode = 'battle';
 
-        // Position vehicle at ground level for battle
-        this.gameState.vehicle.group.position.set(0, 0, 0);
+        // Calculate the lowest point of the vehicle
+        const lowestPoint = this.vehicleBuilder.calculateLowestPoint();
+
+        // Position vehicle so its lowest block touches the ground (y=0)
+        // We need to offset the vehicle group by the negative of the lowest point
+        const yOffset = -lowestPoint;
+
+        this.gameState.vehicle.group.position.set(0, yOffset, 0);
         this.gameState.vehicle.group.rotation.set(0, 0, 0);
         this.vehicleBuilder.vehicleVelocity.set(0, 0, 0);
         this.vehicleBuilder.vehicleRotation = 0;
@@ -214,7 +220,7 @@ export class Game {
         this.combatSystem.particlePool.clear();
         this.enemyManager.clearEnemies();
 
-        // Reset vehicle position
+        // Reset vehicle position (back to build mode position where blocks are placed)
         this.gameState.vehicle.group.position.set(0, 0, 0);
         this.gameState.vehicle.group.rotation.set(0, 0, 0);
         this.vehicleBuilder.vehicleVelocity.set(0, 0, 0);
