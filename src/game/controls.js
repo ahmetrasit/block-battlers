@@ -476,7 +476,7 @@ export class ControlSystem {
         this.gameState.vehicle.group.position.add(moveVector);
 
         // Keep vehicle on ground
-        this.gameState.vehicle.group.position.y = -0.5;
+        this.gameState.vehicle.group.position.y = 0;
 
         // Shooting
         if (this.isShooting) {

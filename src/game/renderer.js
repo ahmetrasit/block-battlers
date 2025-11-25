@@ -128,7 +128,7 @@ export class Renderer {
         });
         this.ground = new THREE.Mesh(groundGeometry, groundMaterial);
         this.ground.rotation.x = -Math.PI / 2;
-        this.ground.position.y = -0.5;
+        this.ground.position.y = 0;
         this.ground.receiveShadow = true;
         this.scene.add(this.ground);
         this.resources.register('ground', this.ground);
@@ -154,7 +154,7 @@ export class Renderer {
         });
 
         this.basePlate = new THREE.Mesh(baseGeometry, baseMaterial);
-        this.basePlate.position.set(0, -0.1, 0);
+        this.basePlate.position.set(0, 0.4, 0);
         this.basePlate.receiveShadow = true;
         this.basePlate.castShadow = false;
         this.scene.add(this.basePlate);
