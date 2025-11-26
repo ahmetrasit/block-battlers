@@ -358,18 +358,16 @@ export class CombatSystem {
                     this.updateHealthBar();
                 }
 
-                // Push vehicles apart - proportional to overlap distance
+                // Push vehicles apart with gentle consistent force
                 const pushDirection = playerPos.clone().sub(enemyPos);
                 const distance = pushDirection.length();
 
-                // Only push if vehicles are actually overlapping (too close)
-                if (distance < 3) {
+                // Avoid division by zero if vehicles are at exact same position
+                if (distance > 0.01) {
                     pushDirection.normalize();
 
-                    // Calculate push force based on overlap (closer = stronger push)
-                    // But cap it to prevent excessive force
-                    const overlap = Math.max(0, 3 - distance);
-                    const pushForce = Math.min(overlap * 0.05, 0.15); // Max 0.15 units per frame
+                    // Apply gentle separation force
+                    const pushForce = 0.08; // Gentle but consistent push
 
                     this.gameState.vehicle.group.position.add(pushDirection.multiplyScalar(pushForce));
                     enemy.group.position.sub(pushDirection.clone().multiplyScalar(pushForce));
